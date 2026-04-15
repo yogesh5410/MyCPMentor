@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyCPMentor — Full System Design & Developer Reference</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --violet: #7c3aed;
+    --violet-light: #ede9fe;
+    --emerald: #059669;
+    --emerald-light: #d1fae5;
+    --orange: #ea580c;
+    --orange-light: #ffedd5;
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --border: #e5e7eb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--gray-800);
+    background: #fff;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1040 50%, #0d1f1a 100%);
+    color: white;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(124,58,237,0.3);
+    border: 1px solid rgba(124,58,237,0.5);
+    color: #a78bfa;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .cover h1 {
+    font-size: 52px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #a78bfa, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .cover-sub {
+    font-size: 18px;
+    color: #9ca3af;
+    max-width: 600px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 40px;
+  }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; }
+  .cover-meta-item .value { font-size: 14px; font-weight: 700; color: #e5e7eb; margin-top: 4px; }
+  .cover-divider {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #7c3aed, #059669);
+    border-radius: 2px;
+    margin: 32px auto;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    padding: 60px 80px;
+    page-break-after: always;
+  }
+  .toc h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  .toc-section { margin-bottom: 20px; }
+  .toc-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--violet);
+    margin-bottom: 8px;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px dotted var(--gray-200);
+    font-size: 13px;
+  }
+  .toc-item:last-child { border-bottom: none; }
+  .toc-num { color: var(--gray-500); font-size: 11px; }
+
+  /* ── Page layout ── */
+  .page {
+    padding: 52px 72px;
+    page-break-before: always;
+  }
+  .page:first-child { page-break-before: auto; }
+
+  /* ── Section headers ── */
+  .section-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--violet);
+    background: var(--violet-light);
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  h1.page-title {
+    font-size: 30px;
+    font-weight: 900;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--gray-500);
+    margin-bottom: 36px;
+    max-width: 700px;
+    line-height: 1.6;
+  }
+  h2.section-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 36px 0 14px;
+    padding-left: 12px;
+    border-left: 3px solid var(--violet);
+  }
+  h3.subsection {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 24px 0 10px;
+  }
+  h4.detail-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 16px 0 6px;
+  }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 5px; }
+
+  /* ── Code blocks ── */
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: var(--gray-900);
+    color: #e5e7eb;
+    padding: 18px 20px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 14px 0;
+    line-height: 1.7;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: var(--gray-100);
+    color: var(--violet);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+
+  /* ── Cards ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .card-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    background: var(--gray-50);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+  }
+  .card-body { font-size: 12.5px; color: var(--gray-700); line-height: 1.65; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-left: 4px solid;
+    font-size: 13px;
+  }
+  .callout-violet { background: var(--violet-light); border-color: var(--violet); }
+  .callout-emerald { background: var(--emerald-light); border-color: var(--emerald); }
+  .callout-orange { background: var(--orange-light); border-color: var(--orange); }
+  .callout-blue { background: var(--blue-light); border-color: var(--blue); }
+  .callout-red { background: var(--red-light); border-color: var(--red); }
+  .callout strong { font-weight: 700; display: block; margin-bottom: 4px; }
+
+  /* ── Architecture diagrams (ASCII-style) ── */
+  .arch-box {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--gray-900);
+    color: #a3e635;
+    padding: 20px;
+    border-radius: 10px;
+    white-space: pre;
+    line-height: 1.6;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin: 14px 0;
+  }
+  thead tr { background: var(--gray-800); color: white; }
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 11.5px;
+  }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-violet { background: var(--violet-light); color: var(--violet); }
+  .badge-emerald { background: var(--emerald-light); color: var(--emerald); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+
+  /* ── Flow steps ── */
+  .flow-steps { counter-reset: step; margin: 16px 0; }
+  .flow-step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--violet);
+    color: white;
+    font-weight: 800;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .step-content { flex: 1; }
+  .step-title { font-weight: 700; font-size: 13px; color: var(--gray-900); margin-bottom: 3px; }
+  .step-desc { font-size: 12.5px; color: var(--gray-700); }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* ── Print ── */
+  @media print {
+    body { font-size: 12px; }
+    .page { padding: 40px 56px; }
+    .toc { padding: 40px 56px; }
+    pre { font-size: 10.5px; }
+    h1.page-title { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     COVER PAGE
+════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Technical Reference Document</div>
+  <h1>MyCPMentor</h1>
+  <div class="cover-divider"></div>
+  <p class="cover-sub">
+    Full System Design, Architecture, Microservice Integration, Problem Ecosystem,
+    Feature Specifications, and Developer Implementation Guide
+  </p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Version</div>
+      <div class="value">1.0</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Date</div>
+      <div class="value">April 2026</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Stack</div>
+      <div class="value">Node.js · React · MongoDB · Redis</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Audience</div>
+      <div class="value">Full-Stack / Backend Developers</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Part 1 — Overview &amp; Architecture</div>
+    <div class="toc-item"><span>1. Project Overview &amp; Goals</span><span class="toc-num">§1</span></div>
+    <div class="toc-item"><span>2. High-Level Architecture</span><span class="toc-num">§2</span></div>
+    <div class="toc-item"><span>3. Technology Stack</span><span class="toc-num">§3</span></div>
+    <div class="toc-item"><span>4. Repository &amp; Folder Structure</span><span class="toc-num">§4</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Part 2 — Problem Ecosystem</div>
+    <div class="toc-item"><span>5. CF Problems — Sourcing, Scraping &amp; Storage</span><span class="toc-num">§5</span></div>
+    <div class="toc-item"><span>6. AI-Generated Problems — Generation Pipeline</span><span class="toc-num">§6</span></div>
+    <div class="toc-item"><span>7. Browser Extension Architecture</span><span class="toc-num">§7</span></div>
+    <div class="toc-item"><span>8. Test Case Runner Service</span><span class="toc-num">§8</span></div>
+    <div class="toc-item"><span>9. Problem Switching &amp; Mode Selection UX</span><span class="toc-num">§9</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Part 3 — Microservices &amp; Infrastructure</div>
+    <div class="toc-item"><span>10. Microservice Map &amp; Communication</span><span class="toc-num">§10</span></div>
+    <div class="toc-item"><span>11. Main API Gateway (Node.js)</span><span class="toc-num">§11</span></div>
+    <div class="toc-item"><span>12. AI Service</span><span class="toc-num">§12</span></div>
+    <div class="toc-item"><span>13. Test Runner Service</span><span class="toc-num">§13</span></div>
+    <div class="toc-item"><span>14. CF Scraper Service</span><span class="toc-num">§14</span></div>
+    <div class="toc-item"><span>15. Notification Worker</span><span class="toc-num">§15</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Part 4 — Caching, Queues &amp; Workers</div>
+    <div class="toc-item"><span>16. Redis Caching Strategy</span><span class="toc-num">§16</span></div>
+    <div class="toc-item"><span>17. Bull Queue System &amp; Workers</span><span class="toc-num">§17</span></div>
+    <div class="toc-item"><span>18. Database Schema (MongoDB)</span><span class="toc-num">§18</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Part 5 — Feature Specifications</div>
+    <div class="toc-item"><span>19. Overview Dashboard &amp; POTD</span><span class="toc-num">§19</span></div>
+    <div class="toc-item"><span>20. Roadmap &amp; AI Mentor</span><span class="toc-num">§20</span></div>
+    <div class="toc-item"><span>21. Practice, Problems &amp; Sheets</span><span class="toc-num">§21</span></div>
+    <div class="toc-item"><span>22. Revision System</span><span class="toc-num">§22</span></div>
+    <div class="toc-item"><span>23. Battles</span><span class="toc-num">§23</span></div>
+    <div class="toc-item"><span>24. Contests</span><span class="toc-num">§24</span></div>
+    <div class="toc-item"><span>25. Analytics &amp; Rating System</span><span class="toc-num">§25</span></div>
+    <div class="toc-item"><span>26. CF Sync</span><span class="toc-num">§26</span></div>
+    <div class="toc-item"><span>27. Community &amp; Social</span><span class="toc-num">§27</span></div>
+    <div class="toc-item"><span>28. Admin Panel</span><span class="toc-num">§28</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Part 6 — Cross-Feature Data Flow</div>
+    <div class="toc-item"><span>29. Data Integration Map</span><span class="toc-num">§29</span></div>
+    <div class="toc-item"><span>30. Auth &amp; Session Flow</span><span class="toc-num">§30</span></div>
+    <div class="toc-item"><span>31. Security Considerations</span><span class="toc-num">§31</span></div>
+    <div class="toc-item"><span>32. Deployment &amp; DevOps</span><span class="toc-num">§32</span></div>
+    <div class="toc-item"><span>33. Implementation Roadmap</span><span class="toc-num">§33</span></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §1 — PROJECT OVERVIEW
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§1 — Overview</div>
+  <h1 class="page-title">Project Overview &amp; Goals</h1>
+  <p class="page-subtitle">MyCPMentor is an AI-Powered Competitive Programming Operating System — a unified platform that learns from a programmer's history, prescribes targeted practice, runs competitions, and adapts recommendations in real time.</p>
+
+  <h2 class="section-title">What Is MyCPMentor?</h2>
+  <p>MyCPMentor is a full-stack web platform built for competitive programmers who want structured, intelligent improvement rather than random grinding. The platform combines:</p>
+  <ul>
+    <li><strong>Curated Problem Pool</strong> — sourced from Codeforces (scraped) and AI-generated custom problems tailored to a user's weak spots.</li>
+    <li><strong>AI Mentor</strong> — an LLM-powered agent that reads a user's full solve history, CF data, and battle results to give hyper-personalized guidance.</li>
+    <li><strong>Live Testing</strong> — an in-browser code editor backed by a sandboxed test-runner service with real test cases and custom test support.</li>
+    <li><strong>Competitive Layer</strong> — 1v1 battles, platform-hosted contests, and a composite rating system.</li>
+    <li><strong>Browser Extension</strong> — solves problems directly on codeforces.com while silently syncing submissions back to MyCPMentor for analytics.</li>
+  </ul>
+
+  <h2 class="section-title">Core Design Principles</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🎯 Context-Aware</div>
+      <div class="card-body">Every recommendation, POTD selection, and AI Mentor message is personalized to the individual user's current level, recent mistakes, and stated goals — not generic.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔗 CF-Native</div>
+      <div class="card-body">Codeforces is the world's largest CP platform. MyCPMentor syncs a user's CF history and scrapes CF's full problem bank — users don't leave their existing workflow.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Real Feedback Loop</div>
+      <div class="card-body">Submissions run against real test cases. Wrong answers show which test case failed. TLE analysis shows which constraint is the bottleneck.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Data-Driven Progress</div>
+      <div class="card-body">Every solve, battle, contest, and revision session feeds into a composite rating and analytics pipeline. Progress is measured and visualized — not assumed.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">User Journey</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Register &amp; Connect CF</div>
+        <div class="step-desc">User signs up, links their Codeforces handle. Backend pulls full submission history via CF API and populates their solve map.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">AI Onboarding Assessment</div>
+        <div class="step-desc">AI Mentor analyzes CF history: strongest/weakest tags, rating trajectory, plateau patterns. Generates a personalized roadmap.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Daily Practice Loop</div>
+        <div class="step-desc">POTD surfaces a relevant problem. User solves it in the in-browser editor or via the CF extension. Submission is judged in the test-runner.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Battle &amp; Contest</div>
+        <div class="step-desc">User challenges friends or random opponents to live coding battles. Participates in platform contests. Rating updates in real time.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Review &amp; Iterate</div>
+        <div class="step-desc">Analytics surfaces error patterns. AI Mentor generates weekly review. Revision queue resurfaces unsolved or incorrectly-solved problems via spaced repetition.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §2 — HIGH-LEVEL ARCHITECTURE
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§2 — Architecture</div>
+  <h1 class="page-title">High-Level Architecture</h1>
+  <p class="page-subtitle">MyCPMentor is built as a collection of loosely-coupled microservices behind a single API gateway, communicating via REST (sync) and Bull/Redis queues (async).</p>
+
+  <div class="arch-box">
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                        CLIENT LAYER                                 │
+  │  ┌────────────────────┐          ┌────────────────────────────────┐ │
+  │  │  React Web App     │          │  Chrome / Firefox Extension    │ │
+  │  │  (Vite + Tailwind) │          │  (Manifest V3 / Content Script)│ │
+  │  └────────┬───────────┘          └───────────────┬────────────────┘ │
+  └───────────┼────────────────────────────────────── ┼────────────────┘
+              │ HTTPS / JWT Auth                       │ HTTPS / Same JWT
+              ▼                                        ▼
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     API GATEWAY (Node.js / Express)                  │
+  │   /auth  /problems  /submissions  /battles  /contests  /admin ...   │
+  │                      Rate-limiting · JWT verify · CORS               │
+  └───┬──────────┬──────────┬────────────┬───────────┬──────────────────┘
+      │          │          │            │           │
+      ▼          ▼          ▼            ▼           ▼
+  ┌────────┐ ┌───────┐ ┌─────────┐ ┌────────┐ ┌──────────┐
+  │  DB    │ │ Cache │ │  Queue  │ │CF Scrpr│ │ AI Svc   │
+  │MongoDB │ │ Redis │ │Bull/    │ │Service │ │(OpenAI / │
+  │        │ │       │ │  Redis  │ │        │ │ Gemini)  │
+  └────────┘ └───────┘ └────┬────┘ └────────┘ └──────────┘
+                             │
+              ┌──────────────┼──────────────────────┐
+              ▼              ▼                       ▼
+        ┌──────────┐  ┌──────────────┐      ┌───────────────┐
+        │  Test    │  │ Notification │      │  Rating       │
+        │  Runner  │  │  Worker      │      │  Calc Worker  │
+        │ (Docker) │  │  (email/push)│      │               │
+        └──────────┘  └──────────────┘      └───────────────┘
+  </div>
+
+  <h2 class="section-title">Request Flow Summary</h2>
+  <table>
+    <thead>
+      <tr><th>Client Action</th><th>Path</th><th>Processing</th><th>Response</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Submit code</td><td>POST /submissions</td><td>Queue → Test Runner Docker sandbox</td><td>SSE stream of verdicts</td></tr>
+      <tr><td>Fetch POTD</td><td>GET /potd</td><td>Redis cache → DB if miss</td><td>Problem JSON (cached 24h)</td></tr>
+      <tr><td>AI chat message</td><td>POST /ai/chat</td><td>Gateway → AI Service (streamed)</td><td>SSE token stream</td></tr>
+      <tr><td>Start battle</td><td>POST /battles/start</td><td>WebSocket room creation → problem assign</td><td>Room ID + problem</td></tr>
+      <tr><td>CF sync</td><td>POST /cf/sync</td><td>Queue → CF Scraper → DB upsert</td><td>Job ID (poll status)</td></tr>
+      <tr><td>Extension submit</td><td>POST /ext/submit</td><td>Same JWT auth → Test Runner</td><td>Verdict JSON</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Synchronous vs Asynchronous Operations</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">⚡ Synchronous (REST)</div>
+      <div class="card-body">
+        <ul>
+          <li>Auth (login, register, OAuth callback)</li>
+          <li>Problem fetch (with cache)</li>
+          <li>User profile read</li>
+          <li>Leaderboard read</li>
+          <li>Analytics read (with cache)</li>
+          <li>Rating read</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📬 Asynchronous (Queue + Workers)</div>
+      <div class="card-body">
+        <ul>
+          <li>Code submission judging</li>
+          <li>CF history sync</li>
+          <li>AI problem generation</li>
+          <li>Rating recalculation after contest</li>
+          <li>Email / push notification dispatch</li>
+          <li>AI weekly summary generation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §3 — TECH STACK
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§3 — Stack</div>
+  <h1 class="page-title">Technology Stack</h1>
+
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Technology</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Frontend</td><td>React 19 + Vite 8 + Tailwind CSS v4</td><td>Fast HMR, React Server Components ready, utility CSS</td></tr>
+      <tr><td>API Gateway</td><td>Node.js 20 + Express 5</td><td>Non-blocking I/O ideal for real-time judging streams</td></tr>
+      <tr><td>Database</td><td>MongoDB (Atlas / self-hosted)</td><td>Flexible schema for varied problem/submission models</td></tr>
+      <tr><td>Cache</td><td>Redis 7</td><td>Sub-millisecond reads for POTD, sessions, rate limiting</td></tr>
+      <tr><td>Queue</td><td>Bull v4 (Redis-backed)</td><td>Retry, priority, concurrency for test runs and AI jobs</td></tr>
+      <tr><td>Real-time</td><td>Socket.io (WebSocket)</td><td>Battle rooms, live contest leaderboard, submission feed</td></tr>
+      <tr><td>Auth</td><td>Passport.js (Google OAuth) + JWT</td><td>Stateless JWT for extension compatibility</td></tr>
+      <tr><td>AI Service</td><td>OpenAI GPT-4o / Gemini 1.5 Pro</td><td>Streaming chat, structured problem generation</td></tr>
+      <tr><td>Code Execution</td><td>Docker (isolated containers) + Judge0 or custom sandbox</td><td>Secure multi-language execution with resource limits</td></tr>
+      <tr><td>Browser Extension</td><td>Chrome Manifest V3 (Firefox compatible)</td><td>Content scripts can't be blocked by CF</td></tr>
+      <tr><td>CF Data</td><td>Codeforces API v1 + custom scraper</td><td>API for ratings/submissions; scraper for problem HTML + test cases</td></tr>
+      <tr><td>Emails</td><td>Resend / Nodemailer + SendGrid</td><td>Transactional email for OTP and notifications</td></tr>
+      <tr><td>Deployment</td><td>Docker Compose (dev) / Kubernetes (prod)</td><td>Service isolation and horizontal scaling</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions</td><td>Auto test + deploy on push to main</td></tr>
+      <tr><td>Monitoring</td><td>Prometheus + Grafana / Datadog</td><td>Service health, queue depth, error rate dashboards</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Language Support for Code Execution</h2>
+  <div class="card-grid-3">
+    <div class="card"><div class="card-title">C++17/20</div><div class="card-body">Primary CP language. GCC 12 + O2 flag. 256MB memory limit, 2–5s time limit.</div></div>
+    <div class="card"><div class="card-title">Python 3</div><div class="card-body">PyPy 3.10 available for performance. 256MB memory, 5s TL.</div></div>
+    <div class="card"><div class="card-title">Java 21</div><div class="card-body">JVM warm-up time accounted for (+1s TL bonus).</div></div>
+    <div class="card"><div class="card-title">Rust</div><div class="card-body">cargo build release. Fastest safe language option.</div></div>
+    <div class="card"><div class="card-title">Go</div><div class="card-body">go build. Popular for system design contests.</div></div>
+    <div class="card"><div class="card-title">JavaScript</div><div class="card-body">Node.js 20. Limited to algorithmic problems, not competitive.</div></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §4 — FOLDER STRUCTURE
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§4 — Structure</div>
+  <h1 class="page-title">Repository &amp; Folder Structure</h1>
+
+  <pre>MyCPMentor/
+├── frontend/                    # React + Vite web app
+│   ├── src/
+│   │   ├── App.jsx              # Root router + RequireAuth guard
+│   │   ├── main.jsx             # Entry point
+│   │   ├── context/             # ThemeContext, AuthContext
+│   │   ├── layouts/
+│   │   │   └── DashboardLayout.jsx   # Sidebar + header shell
+│   │   ├── pages/
+│   │   │   ├── LandingPage.jsx       # Split layout: sections + auth panel
+│   │   │   ├── AuthCallback.jsx      # Google OAuth callback
+│   │   │   └── dashboard/            # Every dashboard route
+│   │   │       ├── Overview.jsx
+│   │   │       ├── POTD.jsx
+│   │   │       ├── Roadmap.jsx
+│   │   │       ├── AIMentor.jsx
+│   │   │       ├── Practice.jsx
+│   │   │       ├── Problems.jsx
+│   │   │       ├── Sheets.jsx
+│   │   │       ├── Revision.jsx
+│   │   │       ├── Battles.jsx
+│   │   │       ├── Contests.jsx
+│   │   │       ├── Leaderboard.jsx
+│   │   │       ├── Analytics.jsx
+│   │   │       ├── Rating.jsx
+│   │   │       ├── CFSync.jsx
+│   │   │       ├── Notifications.jsx
+│   │   │       ├── Community.jsx
+│   │   │       ├── Profile.jsx
+│   │   │       ├── Settings.jsx
+│   │   │       └── admin/
+│   │   │           ├── AdminUsers.jsx
+│   │   │           ├── AdminProblems.jsx
+│   │   │           ├── AdminContests.jsx
+│   │   │           ├── AdminModeration.jsx
+│   │   │           └── AdminSystem.jsx
+│   │   └── components/          # Reusable UI components
+│   │       ├── Navbar.jsx
+│   │       ├── Hero.jsx
+│   │       ├── Features.jsx
+│   │       ├── HowItWorks.jsx
+│   │       ├── ProblemEcosystem.jsx
+│   │       ├── RatingSystem.jsx
+│   │       ├── Footer.jsx
+│   │       └── OTPInput.jsx
+├── backend/                     # Main API gateway (Node.js)
+│   ├── server.js                # Express app entry + Socket.io
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── problems.routes.js
+│   │   ├── submissions.routes.js
+│   │   ├── battles.routes.js
+│   │   ├── contests.routes.js
+│   │   ├── potd.routes.js
+│   │   ├── ai.routes.js
+│   │   ├── cf.routes.js
+│   │   └── admin.routes.js
+│   ├── controllers/
+│   ├── models/                  # Mongoose schemas
+│   ├── middleware/              # JWT verify, rate limit, role check
+│   ├── config/                  # DB, Redis, Passport config
+│   ├── queues/                  # Bull queue definitions
+│   └── workers/                 # Queue consumer workers
+├── ai-service/                  # Python FastAPI or Node.js AI microservice
+├── test-runner/                 # Sandboxed code execution service
+├── cf-scraper/                  # Codeforces problem scraper
+├── extension/                   # Chrome/Firefox browser extension
+│   ├── manifest.json
+│   ├── background.js
+│   ├── content.js               # Injected into codeforces.com pages
+│   └── popup/                   # Extension popup UI (React)
+└── docker-compose.yml           # Local dev orchestration</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §5 — CF PROBLEMS
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§5 — Problem Ecosystem</div>
+  <h1 class="page-title">CF Problems — Sourcing, Scraping &amp; Storage</h1>
+  <p class="page-subtitle">Codeforces has 10,000+ problems. MyCPMentor mirrors this pool using the official CF API for metadata and a custom scraper for problem statements and test cases.</p>
+
+  <h2 class="section-title">Data Sources</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">📡 Codeforces API v1</div>
+      <div class="card-body">
+        Official JSON API. Endpoints used:
+        <ul>
+          <li><code>problemset.problems</code> — all problems with tags, ratings, titles</li>
+          <li><code>contest.standings</code> — contest result data</li>
+          <li><code>user.status</code> — a user's submission history</li>
+          <li><code>user.rating</code> — CF rating history</li>
+        </ul>
+        Rate limit: 1 req/2s per IP. Use server-side caching aggressively.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🕷️ Custom HTML Scraper</div>
+      <div class="card-body">
+        The CF API does NOT provide problem statements, editorial text, or sample test cases in structured form. A Playwright/Puppeteer scraper:
+        <ul>
+          <li>Navigates to each problem URL</li>
+          <li>Extracts HTML statement (converted to Markdown)</li>
+          <li>Scrapes sample input/output pairs</li>
+          <li>Downloads time/memory limits</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">CF Scraper Pipeline</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Bootstrap Sync (one-time)</div>
+        <div class="step-desc">On initial setup, call <code>problemset.problems</code> to fetch all ~10,000 problem stubs. Store in MongoDB <code>problems</code> collection with <code>source: "cf"</code>, <code>cfContest</code>, <code>cfIndex</code>, <code>tags[]</code>, <code>rating</code>. Mark as <code>scraped: false</code>.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Statement Scrape (batch worker)</div>
+        <div class="step-desc">A Bull queue job processes unscraped problems in batches of 50. Playwright headless browser fetches <code>codeforces.com/problemset/problem/{contest}/{index}</code>. Extracts <code>.problem-statement</code> div → convert to Markdown. Stores in <code>problem.statement</code>. Marks <code>scraped: true</code>.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Test Case Acquisition</div>
+        <div class="step-desc">Sample test cases are scraped from problem page HTML. <strong>Full test cases</strong> are obtained via: (a) CF Polygon API if the problem is open-source, (b) community-submitted tests from existing accepted solutions, (c) AI-generated edge cases validated against a known correct solution.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Incremental Sync (daily cron)</div>
+        <div class="step-desc">A cron job runs every 24h, calls CF API for problems added since last sync timestamp. New problem stubs are inserted and queued for scraping. The scraper worker picks them up automatically.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Redis Cache Population</div>
+        <div class="step-desc">After scraping, hot problems (rating 800–2400, solve count &gt;1000) are pre-loaded into Redis with a 24h TTL. POTD candidates are cached separately keyed by date.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">MongoDB Problem Document Schema</h2>
+  <pre>{
+  _id: ObjectId,
+  source: "cf" | "ai",           // problem origin
+  cfContestId: 1234,             // CF contest number (cf only)
+  cfIndex: "A",                  // CF problem index (cf only)
+  cfUrl: "https://codeforces.com/problemset/problem/1234/A",
+  title: "Two Arrays",
+  rating: 1600,                  // CF difficulty rating
+  tags: ["dp", "math", "combinatorics"],
+  timeLimit: 2000,               // ms
+  memoryLimit: 256,              // MB
+  statement: "## Statement\n...", // Markdown
+  inputSpec: "...",
+  outputSpec: "...",
+  sampleTests: [
+    { input: "1 2 3", output: "6" }
+  ],
+  fullTests: [                   // stored in separate collection for large dbs
+    { input: "...", output: "...", isHidden: true }
+  ],
+  editorial: "...",
+  solveCount: 15023,             // from CF API
+  scraped: true,
+  createdAt: Date,
+  updatedAt: Date
+}</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §6 — AI-GENERATED PROBLEMS
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§6 — Problem Ecosystem</div>
+  <h1 class="page-title">AI-Generated Problems — Generation Pipeline</h1>
+  <p class="page-subtitle">When a user needs practice on a specific tag at a specific difficulty and CF doesn't have enough unsolved examples, the AI generates a custom problem with full statement, test cases, and editorial.</p>
+
+  <h2 class="section-title">Trigger Conditions</h2>
+  <p>The AI Problem Generator fires in two scenarios:</p>
+  <ul>
+    <li><strong>On Demand</strong> — User clicks "Generate Problem" in Practice or Sheets with a target tag + difficulty.</li>
+    <li><strong>AI Mentor Prescription</strong> — AI Mentor detects a gap (e.g. user struggles with DP on Trees) and auto-queues an AI problem of appropriate difficulty + style.</li>
+  </ul>
+
+  <h2 class="section-title">Generation Pipeline</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Request to AI Service</div>
+        <div class="step-desc">API Gateway routes <code>POST /ai/generate-problem</code> with payload: <code>{ userId, tags: ["dp", "trees"], rating: 1800, avoidProblemIds: [...] }</code></div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Prompt Engineering</div>
+        <div class="step-desc">AI Service builds a structured prompt: <em>"Generate a competitive programming problem at ~1800 Codeforces difficulty. Topic: DP on Trees. The problem must have a non-trivial observation. Provide: title, story, input/output spec, constraints, 3 sample test cases, 5 hidden test cases with answers, time complexity of solution, full editorial with C++ code."</em></div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">LLM Response Parsing</div>
+        <div class="step-desc">Response is streamed and parsed into structured JSON using Zod schema validation. Fields: <code>title</code>, <code>statement</code>, <code>inputSpec</code>, <code>outputSpec</code>, <code>sampleTests[]</code>, <code>hiddenTests[]</code>, <code>editorial</code>, <code>solutionCode</code>.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Self-Verification</div>
+        <div class="step-desc">The AI-generated solution code is run through the Test Runner against all generated test cases. If the solution fails any case, the problem is re-sent to the LLM for correction (max 2 retries). If it still fails, the problem is flagged for admin review and a CF problem is served as fallback.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Storage &amp; Serving</div>
+        <div class="step-desc">Verified problems are stored in MongoDB with <code>source: "ai"</code>, <code>generatedFor: userId</code>, <code>isPublic: false</code> (unless admin promotes it). They never appear in other users' practice queues unless explicitly shared.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">AI Problem Document Schema</h2>
+  <pre>{
+  _id: ObjectId,
+  source: "ai",
+  generatedFor: UserId,          // personalized to this user
+  tags: ["dp", "trees"],
+  rating: 1800,
+  title: "The Tree Merchant",
+  statement: "...",
+  inputSpec: "...",
+  outputSpec: "...",
+  constraints: "1 ≤ n ≤ 2×10^5",
+  sampleTests: [...],
+  hiddenTests: [...],
+  editorial: "...",
+  solutionCode: "...",           // AI's reference solution (C++)
+  isVerified: true,              // passed self-test
+  isPublic: false,
+  adminStatus: "pending" | "approved" | "rejected",
+  generationModel: "gpt-4o",
+  createdAt: Date
+}</pre>
+
+  <div class="callout callout-orange">
+    <strong>⚠️ Test Case Integrity</strong>
+    AI-generated test cases must pass through the AI's own solution before storage. The test runner runs the <code>solutionCode</code> against all <code>hiddenTests</code> and if any mismatch is found, the problem is invalidated. This prevents users from encountering unsolvable or incorrectly specified problems.
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §7 — BROWSER EXTENSION
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§7 — Extension</div>
+  <h1 class="page-title">Browser Extension Architecture</h1>
+  <p class="page-subtitle">The MyCPMentor extension runs inside codeforces.com — injecting a problem sidebar, syncing submissions to MyCPMentor, and letting users solve CF problems while getting real-time AI hints without leaving the CF interface.</p>
+
+  <h2 class="section-title">Extension Components</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">📄 manifest.json</div>
+      <div class="card-body">Manifest V3. Declares <code>host_permissions</code> for <code>codeforces.com/*</code> and the MyCPMentor API URL. Registers <code>content.js</code> for CF pages and <code>background.js</code> as service worker.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔧 content.js (Content Script)</div>
+      <div class="card-body">Injected into every <code>codeforces.com/problemset/problem/*</code> and <code>codeforces.com/contest/*/problem/*</code> page. Reads DOM to extract: problem title, contest ID, index. Injects the MyCPMentor sidebar UI.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ background.js (Service Worker)</div>
+      <div class="card-body">Handles API calls to MyCPMentor backend (avoids CORS issues from content scripts). Listens for messages from content script and relays to API. Manages JWT token storage in <code>chrome.storage.local</code>.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🖼️ Popup UI (React)</div>
+      <div class="card-body">Extension popup (click icon): shows login status, current streak, today's POTD, and quick link to dashboard. Built with React + Vite, bundled separately.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Auth Flow — Shared JWT with Website</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Login On Website</div>
+        <div class="step-desc">User logs in on MyCPMentor web app. JWT stored in <code>localStorage</code>.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Extension Reads Token</div>
+        <div class="step-desc">On extension install/popup open, content script sends <code>chrome.runtime.sendMessage({ type: 'GET_TOKEN' })</code>. Background service worker checks <code>chrome.storage.local</code>. If not found, redirects user to login in popup.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Token Sync</div>
+        <div class="step-desc">The MyCPMentor web app detects if the extension is installed (via <code>chrome.runtime.sendMessage</code> handshake). If yes, it posts the JWT to the extension via <code>window.postMessage</code> → content script → background → <code>chrome.storage.local</code>.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">API Calls from Extension</div>
+        <div class="step-desc">All API calls from the extension include the JWT as <code>Authorization: Bearer &lt;token&gt;</code>. The backend treats extension calls identically to web app calls — the same JWT verify middleware runs.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Submission Interception on CF</h2>
+  <p>When a user submits code on codeforces.com, the content script intercepts the submission:</p>
+  <ol>
+    <li>Content script adds a MutationObserver on the CF verdict element (<code>#pageContent .verdict</code>).</li>
+    <li>When a verdict appears (AC/WA/TLE), the content script reads the problem ID and verdict.</li>
+    <li>It sends <code>{ problemCfId, verdict, language, submissionId }</code> to the background worker.</li>
+    <li>Background worker calls <code>POST /cf/submission-sync</code> on MyCPMentor backend with the JWT.</li>
+    <li>Backend saves the submission to MongoDB, updates the user's solve map, and triggers rating recalculation if applicable.</li>
+  </ol>
+
+  <div class="callout callout-violet">
+    <strong>💡 In-Page Sidebar Features</strong>
+    The injected sidebar shows: ① Difficulty and tags from MyCPMentor DB, ② "Add to Sheet" button, ③ AI Hint button (costs 1 hint token), ④ User's previous attempts on this problem, ⑤ "I solved it" manual override for offline solutions.
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §8 — TEST RUNNER SERVICE
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§8 — Test Runner</div>
+  <h1 class="page-title">Test Case Runner Service</h1>
+  <p class="page-subtitle">The Test Runner is an isolated microservice that executes user-submitted code in sandboxed Docker containers, compares output against expected answers, and returns structured verdicts.</p>
+
+  <h2 class="section-title">Architecture Overview</h2>
+  <div class="arch-box">
+  API Gateway
+      │
+      │  POST /submissions { code, language, problemId, userId }
+      ▼
+  ┌─────────────────────────────────┐
+  │  Submission Controller          │
+  │  1. Validate + sanitize input   │
+  │  2. Load test cases from DB     │
+  │     (or Redis cache)            │
+  │  3. Enqueue to Bull queue       │
+  │     "submission-queue"         │
+  │  4. Return { jobId }            │
+  └──────────────┬──────────────────┘
+                 │ Bull Job
+                 ▼
+  ┌─────────────────────────────────┐
+  │  Test Runner Worker             │
+  │  (Bull consumer, N concurrent)  │
+  │                                 │
+  │  For each test case:            │
+  │  ┌─────────────────────────┐    │
+  │  │  docker run             │    │
+  │  │  --memory=256m          │    │
+  │  │  --cpus=1               │    │
+  │  │  --network none         │    │
+  │  │  --read-only            │    │
+  │  │  judge-runner:cpp17     │    │
+  │  │  [compiled binary]      │    │
+  │  └─────────────────────────┘    │
+  │  Compare stdout vs expected     │
+  │  Emit verdict via WebSocket     │
+  └─────────────────────────────────┘
+  </div>
+
+  <h2 class="section-title">Verdict Types</h2>
+  <table>
+    <thead>
+      <tr><th>Verdict</th><th>Code</th><th>Condition</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Accepted</td><td><span class="badge badge-emerald">AC</span></td><td>stdout matches expected output (ignoring trailing whitespace)</td></tr>
+      <tr><td>Wrong Answer</td><td><span class="badge badge-red">WA</span></td><td>Output differs from expected on test N</td></tr>
+      <tr><td>Time Limit Exceeded</td><td><span class="badge badge-orange">TLE</span></td><td>Process doesn't finish within time limit × 1.5 (kill margin)</td></tr>
+      <tr><td>Memory Limit Exceeded</td><td><span class="badge badge-orange">MLE</span></td><td>Container RAM usage exceeds limit</td></tr>
+      <tr><td>Runtime Error</td><td><span class="badge badge-red">RE</span></td><td>Non-zero exit code (segfault, exception, etc.)</td></tr>
+      <tr><td>Compilation Error</td><td><span class="badge badge-red">CE</span></td><td>Compiler returns errors — returned immediately, no execution</td></tr>
+      <tr><td>Presentation Error</td><td><span class="badge badge-blue">PE</span></td><td>Output whitespace/formatting differs but values are correct</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Security Sandbox</h2>
+  <ul>
+    <li><strong>Network isolation:</strong> <code>--network none</code> — container cannot make any network calls.</li>
+    <li><strong>Read-only filesystem:</strong> <code>--read-only</code> — cannot write to filesystem except <code>/tmp</code>.</li>
+    <li><strong>User namespace:</strong> Container runs as non-root user (UID 65534).</li>
+    <li><strong>Seccomp profile:</strong> Syscall allowlist restricts to read/write/exec only. No fork bombs.</li>
+    <li><strong>Resource limits:</strong> CPU = 1 core, RAM = 256MB, disk write = 0 (read-only), time = problem TL × 1.5.</li>
+    <li><strong>Container reuse:</strong> Pre-warmed container pool of 10 per language reduces cold-start latency from ~800ms to ~50ms.</li>
+  </ul>
+
+  <h2 class="section-title">Streaming Verdicts to Frontend</h2>
+  <p>Users see verdicts as they arrive (test by test), not as a batch at the end. This uses <strong>Server-Sent Events (SSE)</strong>:</p>
+  <pre>  GET /submissions/:jobId/stream
+  Content-Type: text/event-stream
+
+  data: {"testCase": 1, "verdict": "AC", "time": 23, "memory": 12}
+  data: {"testCase": 2, "verdict": "AC", "time": 31, "memory": 14}
+  data: {"testCase": 3, "verdict": "WA", "expected": "6", "got": "5"}
+  data: {"done": true, "finalVerdict": "WA", "passedTests": 2, "totalTests": 10}</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §9 — PROBLEM SWITCHING
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§9 — Problem UX</div>
+  <h1 class="page-title">Problem Switching &amp; Mode Selection</h1>
+  <p class="page-subtitle">Users can switch between CF problems (scraped), AI-generated problems, and custom problems in any practice context. The UX makes the source transparent while the backend handles it uniformly.</p>
+
+  <h2 class="section-title">Problem Sources Available Per Context</h2>
+  <table>
+    <thead>
+      <tr><th>Feature</th><th>CF Problems</th><th>AI Problems</th><th>Custom</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>POTD</td><td>✅ Primary source</td><td>✅ Fallback or supplement</td><td>❌</td></tr>
+      <tr><td>Practice</td><td>✅</td><td>✅ On request</td><td>❌</td></tr>
+      <tr><td>Sheets</td><td>✅</td><td>✅</td><td>✅ (admin-created)</td></tr>
+      <tr><td>Battles</td><td>✅ Primary</td><td>✅ AI-curated set</td><td>❌</td></tr>
+      <tr><td>Contests</td><td>✅ Admin-picked</td><td>✅ Admin-generated</td><td>✅ (admin)</td></tr>
+      <tr><td>Revision</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Switching Flow in Practice Mode</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">User Opens Practice</div>
+        <div class="step-desc">Default shows CF problems filtered by: user's current weak tags + rating ± 200 from their current MyCPMentor rating. Source toggle shows "CF" (active) and "AI" buttons.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Source Toggle → "AI"</div>
+        <div class="step-desc">Frontend calls <code>GET /problems?source=ai&amp;tags=dp,trees&amp;rating=1800</code>. Backend checks if AI problems exist for these params for this user. If not, triggers generation pipeline in background. Returns a loading state with ETA.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Problem Rendered</div>
+        <div class="step-desc">The problem page renders identically regardless of source. Problem metadata includes <code>source</code> field — a small "AI" or "CF" badge is shown in the top-right. The in-browser editor, test runner, and verdict display work identically.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Solve Recorded</div>
+        <div class="step-desc">Submissions against AI problems are stored in <code>submissions</code> collection with <code>problemSource: "ai"</code>. They count towards rating, analytics, and revision scheduling — no difference from CF problems in the data pipeline.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Redirect to CF (Extension Mode)</h2>
+  <p>For CF problems, users have a choice of <strong>two solving environments</strong>:</p>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🖥️ In-Browser Editor (Default)</div>
+      <div class="card-body">Monaco editor embedded in MyCPMentor. Code submitted to our Test Runner. Verdict shown inline. Full analytics captured. No CF account needed.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌐 Solve on CF (Extension)</div>
+      <div class="card-body">Button opens the problem on codeforces.com. Extension detects the problem and injects the MyCPMentor sidebar. When user submits on CF, extension intercepts the verdict and syncs it back to MyCPMentor.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §10 — MICROSERVICE MAP
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§10 — Microservices</div>
+  <h1 class="page-title">Microservice Map &amp; Communication</h1>
+
+  <h2 class="section-title">Service Inventory</h2>
+  <table>
+    <thead>
+      <tr><th>Service</th><th>Port</th><th>Language</th><th>Responsibility</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>API Gateway</td><td>3000</td><td>Node.js/Express</td><td>Auth, routing, rate limiting, WebSocket hub</td></tr>
+      <tr><td>AI Service</td><td>5000</td><td>Python/FastAPI or Node.js</td><td>LLM calls, problem generation, AI Mentor chat</td></tr>
+      <tr><td>Test Runner</td><td>4000</td><td>Node.js (Docker orchestrator)</td><td>Sandboxed code execution, verdict streaming</td></tr>
+      <tr><td>CF Scraper</td><td>6000</td><td>Node.js/Playwright</td><td>CF API + HTML scraping, incremental sync</td></tr>
+      <tr><td>Notification Worker</td><td>N/A (queue only)</td><td>Node.js</td><td>Email/push dispatch from Bull queue</td></tr>
+      <tr><td>Rating Worker</td><td>N/A (queue only)</td><td>Node.js</td><td>Composite rating recalculation</td></tr>
+      <tr><td>Redis</td><td>6379</td><td>Redis 7</td><td>Cache + Bull queue broker</td></tr>
+      <tr><td>MongoDB</td><td>27017</td><td>MongoDB 7</td><td>Primary persistent store</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Inter-Service Communication</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Sync (REST/HTTP)</div>
+      <div class="card-body">API Gateway → AI Service: <code>POST http://ai-service:5000/chat</code>, <code>POST /generate-problem</code>. Streaming response via SSE. Uses internal Docker network — no external exposure.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Async (Bull Queues)</div>
+      <div class="card-body">All heavy jobs flow through Redis-backed Bull queues. Producer (API Gateway) adds jobs. Consumers (workers) pick up and process. Decouples HTTP response latency from job latency.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Real-time (WebSocket)</div>
+      <div class="card-body">Socket.io rooms for: battle sessions, contest live feed, submission verdict stream, admin system health updates.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Events (Redis Pub/Sub)</div>
+      <div class="card-body">Rating Worker publishes <code>rating:updated:{userId}</code> on Redis. API Gateway subscribes and pushes updated rating to user's WebSocket connection.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Bull Queue Definitions</h2>
+  <table>
+    <thead>
+      <tr><th>Queue Name</th><th>Producer</th><th>Consumer</th><th>Priority</th><th>Max Retries</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>submission-queue</code></td><td>API Gateway</td><td>Test Runner Worker</td><td>High</td><td>1</td></tr>
+      <tr><td><code>ai-generate-queue</code></td><td>API Gateway / AI Mentor</td><td>AI Service Worker</td><td>Normal</td><td>3</td></tr>
+      <tr><td><code>cf-scrape-queue</code></td><td>CF Scraper Service</td><td>CF Scraper Worker</td><td>Low</td><td>5</td></tr>
+      <tr><td><code>notification-queue</code></td><td>API Gateway</td><td>Notification Worker</td><td>Normal</td><td>3</td></tr>
+      <tr><td><code>rating-queue</code></td><td>API Gateway (post-contest)</td><td>Rating Worker</td><td>Normal</td><td>2</td></tr>
+      <tr><td><code>cf-sync-queue</code></td><td>API Gateway (/cf/sync)</td><td>CF Scraper Worker</td><td>High</td><td>3</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §16 — CACHING STRATEGY
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§16 — Caching</div>
+  <h1 class="page-title">Redis Caching Strategy</h1>
+  <p class="page-subtitle">Redis is used for three distinct purposes: application cache (reduce DB reads), Bull queue broker (async job management), and session store (rate limiting, real-time state).</p>
+
+  <h2 class="section-title">Cache Key Schema</h2>
+  <table>
+    <thead>
+      <tr><th>Key Pattern</th><th>TTL</th><th>Content</th><th>Invalidation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>potd:{date}:{difficulty}</code></td><td>24h</td><td>Full problem JSON for POTD</td><td>Daily cron replaces at midnight</td></tr>
+      <tr><td><code>problem:{problemId}</code></td><td>1h</td><td>Problem statement + metadata</td><td>On admin edit via del</td></tr>
+      <tr><td><code>user:session:{userId}</code></td><td>15min</td><td>User profile snapshot</td><td>On profile update</td></tr>
+      <tr><td><code>leaderboard:global</code></td><td>5min</td><td>Top 100 users sorted list</td><td>Time-based expiry</td></tr>
+      <tr><td><code>leaderboard:weekly</code></td><td>5min</td><td>Weekly leaderboard</td><td>Time-based expiry</td></tr>
+      <tr><td><code>analytics:{userId}</code></td><td>10min</td><td>Aggregated analytics data</td><td>On new submission</td></tr>
+      <tr><td><code>contest:{contestId}:standings</code></td><td>30s</td><td>Live contest standings</td><td>On every accepted submission</td></tr>
+      <tr><td><code>cf:problems:metadata</code></td><td>6h</td><td>All CF problem stubs (paginated)</td><td>After CF scraper sync</td></tr>
+      <tr><td><code>ratelimit:{ip}:{endpoint}</code></td><td>60s</td><td>Request count (sliding window)</td><td>TTL expiry</td></tr>
+      <tr><td><code>rl:submission:{userId}</code></td><td>10s</td><td>Submission rate limit (max 3/10s)</td><td>TTL expiry</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Cache-Aside Pattern (Standard Read Flow)</h2>
+  <pre>async function getProblem(problemId) {
+  const cacheKey = `problem:${problemId}`;
+
+  // 1. Check Redis
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  // 2. Cache miss — read MongoDB
+  const problem = await Problem.findById(problemId).lean();
+  if (!problem) throw new NotFoundError();
+
+  // 3. Populate cache
+  await redis.setex(cacheKey, 3600, JSON.stringify(problem));
+
+  return problem;
+}</pre>
+
+  <h2 class="section-title">Cache Invalidation Strategy</h2>
+  <ul>
+    <li><strong>Problems</strong> — Invalidated on admin edit: <code>redis.del(`problem:${id}`)</code></li>
+    <li><strong>User Session</strong> — Invalidated on profile update or submission record</li>
+    <li><strong>Leaderboard</strong> — Rely on TTL (5min); acceptable staleness</li>
+    <li><strong>POTD</strong> — Replaced atomically by cron: <code>SET potd:2026-04-14:easy ... EX 86400</code></li>
+    <li><strong>Contest Standings</strong> — Short TTL (30s) with write-through on AC submission</li>
+  </ul>
+
+  <div class="callout callout-violet">
+    <strong>💡 Pre-warming Hot Problems</strong>
+    After any CF scraper sync, a post-sync worker pre-warms the Redis cache for the 1000 most-solved CF problems (rating 800–2000, solve count > 5000). This ensures the most frequently accessed problems are always served from cache.
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §18 — DATABASE SCHEMA
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§18 — Database</div>
+  <h1 class="page-title">Database Schema (MongoDB)</h1>
+
+  <h2 class="section-title">Collections Overview</h2>
+  <table>
+    <thead>
+      <tr><th>Collection</th><th>Approximate Documents</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>users</code></td><td>Thousands</td><td>User accounts, CF link, rating, streak</td></tr>
+      <tr><td><code>problems</code></td><td>~10,000 (CF) + growing (AI)</td><td>Full problem data for all sources</td></tr>
+      <tr><td><code>submissions</code></td><td>Millions (high write)</td><td>Every code submission with verdict</td></tr>
+      <tr><td><code>battles</code></td><td>Thousands</td><td>1v1 battle sessions + results</td></tr>
+      <tr><td><code>contests</code></td><td>Hundreds</td><td>Contest definitions and standings</td></tr>
+      <tr><td><code>sheets</code></td><td>Thousands</td><td>Problem lists (user and platform)</td></tr>
+      <tr><td><code>notifications</code></td><td>Millions</td><td>Per-user notification records</td></tr>
+      <tr><td><code>ratings</code></td><td>Per user per event</td><td>Full rating history events</td></tr>
+      <tr><td><code>cfsubmissions</code></td><td>Millions</td><td>Synced CF submissions (from API + extension)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection">User Schema</h3>
+  <pre>{
+  _id: ObjectId,
+  username: String,              // unique MyCPMentor handle
+  email: String,                 // unique, indexed
+  passwordHash: String,          // bcrypt (null for OAuth users)
+  googleId: String,              // Google OAuth sub (null for email users)
+  cfHandle: String,              // Codeforces username
+  cfRating: Number,              // last synced CF rating
+  mcmRating: Number,             // MyCPMentor composite rating
+  role: "user" | "mod" | "admin",
+  solveMap: {                    // quick lookup: problemId → verdict
+    "507f1f77bcf86cd799439011": "AC",
+    ...
+  },
+  streakCurrent: Number,
+  streakLongest: Number,
+  lastActiveDate: Date,
+  notificationPrefs: {
+    email: Boolean,
+    push: Boolean,
+    battleChallenges: Boolean,
+    contestReminders: Boolean,
+    weeklyDigest: Boolean
+  },
+  cfSyncedAt: Date,
+  isVerified: Boolean,           // email verified
+  isBanned: Boolean,
+  banReason: String,
+  createdAt: Date
+}</pre>
+
+  <h3 class="subsection">Submission Schema</h3>
+  <pre>{
+  _id: ObjectId,
+  userId: ObjectId,              // ref: users
+  problemId: ObjectId,           // ref: problems
+  problemSource: "cf" | "ai",
+  language: "cpp17" | "python3" | "java" | "rust" | "go",
+  code: String,                  // gzipped if > 64KB
+  verdict: "AC" | "WA" | "TLE" | "MLE" | "RE" | "CE",
+  passedTests: Number,
+  totalTests: Number,
+  timeMs: Number,                // max time across test cases
+  memoryKb: Number,
+  isFromExtension: Boolean,
+  contestId: ObjectId,           // non-null if submitted in contest
+  battleId: ObjectId,            // non-null if submitted in battle
+  judgerJobId: String,           // Bull job ID for status lookup
+  createdAt: Date
+}</pre>
+
+  <h3 class="subsection">Battle Schema</h3>
+  <pre>{
+  _id: ObjectId,
+  players: [
+    { userId: ObjectId, rating: Number, solvedAt: Date, verdict: String }
+  ],
+  problemId: ObjectId,
+  status: "waiting" | "active" | "finished" | "draw",
+  startedAt: Date,
+  endedAt: Date,
+  winnerId: ObjectId,
+  ratingDelta: Number,           // applied to winner (+) and loser (-)
+  socketRoomId: String
+}</pre>
+
+  <h2 class="section-title">Key Indexes</h2>
+  <pre>// Problems
+db.problems.createIndex({ tags: 1, rating: 1 })           // practice filter
+db.problems.createIndex({ cfContestId: 1, cfIndex: 1 })   // CF lookups
+db.problems.createIndex({ source: 1, generatedFor: 1 })   // AI problems per user
+
+// Submissions
+db.submissions.createIndex({ userId: 1, createdAt: -1 })  // user history
+db.submissions.createIndex({ problemId: 1, userId: 1 })   // check if solved
+db.submissions.createIndex({ contestId: 1, verdict: 1 })  // contest standings
+db.submissions.createIndex({ createdAt: 1 }, { expireAfterSeconds: 0 }) // TTL (optional)
+
+// Users
+db.users.createIndex({ cfHandle: 1 }, { sparse: true })   // CF sync lookup
+db.users.createIndex({ mcmRating: -1 })                    // leaderboard</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §19 — FEATURES: POTD & OVERVIEW
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§19 — Features</div>
+  <h1 class="page-title">Overview Dashboard &amp; POTD</h1>
+
+  <h2 class="section-title">Overview Dashboard</h2>
+  <p>The Overview is the user's home screen — a quick-read snapshot of all active metrics. It aggregates live data from multiple collections:</p>
+  <table>
+    <thead>
+      <tr><th>Widget</th><th>Data Source</th><th>Update Frequency</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Current Rating + rank</td><td><code>users.mcmRating</code></td><td>After every battle/contest</td></tr>
+      <tr><td>Solve streak</td><td><code>users.streakCurrent</code></td><td>After every AC submission</td></tr>
+      <tr><td>Today's POTD status</td><td><code>potd:{today}:*</code> Redis + <code>users.solveMap</code></td><td>Real-time</td></tr>
+      <tr><td>Recent submissions</td><td><code>submissions</code> (last 5)</td><td>Real-time</td></tr>
+      <tr><td>Active battles</td><td><code>battles</code> where status=active</td><td>Real-time</td></tr>
+      <tr><td>Upcoming contests</td><td><code>contests</code> where startTime > now</td><td>5min cache</td></tr>
+      <tr><td>AI Mentor tip</td><td>AI Service (cached 1h per user)</td><td>Hourly</td></tr>
+      <tr><td>Weak tag spotlight</td><td>Aggregation over <code>submissions</code></td><td>Daily</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">POTD (Problem of the Day) System</h2>
+  <p>POTD surfaces one curated problem per difficulty (Easy/Medium/Hard) per day.</p>
+
+  <h3 class="subsection">POTD Selection Algorithm</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Nightly Cron (00:00 UTC)</div>
+        <div class="step-desc">A cron job runs each night to select tomorrow's POTD. It calls an AI Service endpoint that picks the best problem for each difficulty tier.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">AI Selection Criteria</div>
+        <div class="step-desc">For each difficulty tier, AI ranks candidate problems by: (a) not solved by majority (&lt;30% user solve rate), (b) covers tags that platform users are collectively weak at (aggregate analytics), (c) hasn't appeared as POTD in last 90 days, (d) has complete statement and test cases.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Admin Override</div>
+        <div class="step-desc">Admin can preview the AI selection 7 days ahead and override any day via the Admin → Problem Bank → POTD Scheduler. Overrides take priority.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Cache Population</div>
+        <div class="step-desc">Selected POTDs are written to Redis: <code>SET potd:2026-04-15:easy {problemJson} EX 86400</code>. All user requests are served from Redis — MongoDB is not hit for POTD reads during the day.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-emerald">
+    <strong>📊 POTD Personalization (v2)</strong>
+    Future version: Each user sees a POTD personalized to their level. Redis key changes to <code>potd:{date}:{userId}</code>. Generated per-user by AI Mentor at midnight based on individual analytics. Requires pre-computation for all active users — runs as a Bull job fan-out.
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §20 — ROADMAP & AI MENTOR
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§20 — Features</div>
+  <h1 class="page-title">Roadmap &amp; AI Mentor</h1>
+
+  <h2 class="section-title">Roadmap</h2>
+  <p>The Roadmap is a structured curriculum of topics organized from beginner to advanced. Each topic links to curated problems (CF + AI) and shows the user's completion status.</p>
+
+  <h3 class="subsection">Roadmap Data Model</h3>
+  <pre>{
+  // RoadmapTopic collection
+  _id: ObjectId,
+  title: "Binary Search",
+  category: "Algorithm Fundamentals",
+  order: 5,                      // display order
+  description: "...",
+  prerequisites: [ObjectId],     // must complete before unlocking
+  problemIds: [ObjectId],        // curated 5-10 problems
+  minRating: 1200,
+  maxRating: 1800,
+  // Per-user progress tracked in UserRoadmap collection
+}
+
+// UserRoadmap: one doc per user
+{
+  userId: ObjectId,
+  completedTopics: [ObjectId],
+  topicProgress: {
+    "{topicId}": { solved: 3, total: 7, lastAttempt: Date }
+  }
+}</pre>
+
+  <h2 class="section-title">AI Mentor</h2>
+  <p>The AI Mentor is a persistent, context-aware chat agent that knows the user's complete history and gives personalized coaching — not generic answers.</p>
+
+  <h3 class="subsection">Context Building (System Prompt)</h3>
+  <p>Before each AI Mentor session, the backend assembles a rich context object that becomes the LLM system prompt:</p>
+  <pre>const context = {
+  user: {
+    mcmRating: 1547,
+    cfRating: 1623,
+    streakCurrent: 7,
+    level: "Pupil → Specialist transition"
+  },
+  recentSolves: [...last 20 AC submissions],
+  recentFailures: [...last 10 WA/TLE submissions],
+  weakTags: ["segment trees", "divide and conquer"],  // from analytics
+  strongTags: ["greedy", "binary search", "dp"],
+  roadmapProgress: { completedTopics: 12, totalTopics: 40 },
+  upcomingContest: "Codeforces Round #920 in 2 days",
+  lastMentorSession: "2 days ago"
+};
+
+const systemPrompt = `You are MyCPMentor AI — a world-class competitive programming coach.
+User context: ${JSON.stringify(context)}
+Never be generic. Always reference the user's specific data.
+If they ask for a problem, generate one suited for their level.
+Always explain WHY, not just WHAT.`;</pre>
+
+  <h3 class="subsection">Streaming Chat Flow</h3>
+  <pre>POST /ai/chat  { message: "I keep getting TLE on DP problems" }
+               ↓
+API Gateway → AI Service
+               ↓
+AI Service: stream GPT-4o response (Server-Sent Events)
+               ↓
+Frontend: token-by-token display (like ChatGPT)</pre>
+
+  <h3 class="subsection">Special Commands</h3>
+  <table>
+    <thead>
+      <tr><th>User Intent</th><th>AI Action</th><th>Backend Operation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>"Give me a problem"</td><td>Generate AI problem or pick CF problem</td><td>Calls <code>POST /ai/generate-problem</code></td></tr>
+      <tr><td>"Review my code"</td><td>Analyze latest submission</td><td>Fetches last submission from DB</td></tr>
+      <tr><td>"Make me a study plan"</td><td>Generate 7-day plan</td><td>Updates <code>UserRoadmap</code></td></tr>
+      <tr><td>"What should I solve next?"</td><td>Prescribe next 3 problems</td><td>Reads analytics + weak tags</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §23 — BATTLES
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§23 — Features</div>
+  <h1 class="page-title">Battles — 1v1 Real-Time Coding</h1>
+  <p class="page-subtitle">Battles are live, real-time 1v1 coding competitions. Both players get the same problem and the first to submit AC wins. Uses WebSocket for real-time synchronization.</p>
+
+  <h2 class="section-title">Battle Lifecycle</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Challenge Creation</div>
+        <div class="step-desc">Player A clicks "Challenge Friend" or "Find Opponent" (rated matchmaking). <code>POST /battles/challenge { opponentId?, rating, tags? }</code>. Server creates a Battle doc with <code>status: "waiting"</code> and emits a Socket.io event to opponent.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Opponent Accepts</div>
+        <div class="step-desc"><code>POST /battles/:id/accept</code>. Server assigns a problem (filtered by both players' rating average ± 100). Sets <code>status: "active"</code>, <code>startedAt: now</code>. Both players receive the problem via Socket.io event <code>battle:start</code>.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Live Battle</div>
+        <div class="step-desc">Both players code in their editors. Submissions go to Test Runner. Results are sent to both players via Socket.io in real-time: <code>battle:opponent-submitted</code> events show opponent activity (not their code — only that they submitted and the verdict).</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">First AC Wins</div>
+        <div class="step-desc">When first AC is received, server sets <code>winnerId</code>, <code>status: "finished"</code>. Enqueues a <code>rating-queue</code> job to compute and apply rating deltas. Emits <code>battle:result</code> to both players.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Rating Update</div>
+        <div class="step-desc">Rating Worker calculates delta using Elo-variant: expected win probability based on rating difference → actual outcome → delta. Winner gains, loser loses. Max ±50 per battle. Updates <code>users.mcmRating</code> and appends to <code>ratings</code> collection.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Matchmaking Algorithm</h2>
+  <pre>// Find an opponent within ±200 rating who is "searching" status
+async function findOpponent(userId, userRating) {
+  const searchingUsers = await redis.smembers('battle:searching');
+  for (const candidateId of searchingUsers) {
+    const candidateRating = await redis.hget(`user:${candidateId}`, 'rating');
+    if (Math.abs(candidateRating - userRating) <= 200 && candidateId !== userId) {
+      await redis.srem('battle:searching', candidateId);
+      return candidateId;
+    }
+  }
+  // No match — add self to searching pool (expire after 60s)
+  await redis.sadd('battle:searching', userId);
+  await redis.expire(`battle:searching:${userId}`, 60);
+  return null;
+}</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §25 — ANALYTICS & RATING
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§25 — Features</div>
+  <h1 class="page-title">Analytics &amp; Rating System</h1>
+
+  <h2 class="section-title">Analytics Pipeline</h2>
+  <p>Analytics aggregates raw submission data into human-readable insights. Computed via MongoDB aggregation pipelines, cached in Redis for 10 minutes per user.</p>
+
+  <h3 class="subsection">Key Aggregations</h3>
+  <pre>// Tag accuracy: for each tag, calculate AC rate
+db.submissions.aggregate([
+  { $match: { userId: ObjectId(userId) } },
+  { $lookup: { from: 'problems', localField: 'problemId', foreignField: '_id', as: 'problem' } },
+  { $unwind: '$problem' },
+  { $unwind: '$problem.tags' },
+  { $group: {
+      _id: '$problem.tags',
+      total: { $sum: 1 },
+      accepted: { $sum: { $cond: [{ $eq: ['$verdict', 'AC'] }, 1, 0] } }
+  }},
+  { $addFields: { accuracy: { $divide: ['$accepted', '$total'] } } },
+  { $sort: { accuracy: 1 } }  // weakest tags first
+])</pre>
+
+  <h2 class="section-title">MyCPMentor Composite Rating Formula</h2>
+  <p>The composite rating is calculated from 5 weighted components, recomputed after each relevant event:</p>
+
+  <div class="arch-box">
+  MCM_Rating = Σ (component_score × weight)
+
+  Components:
+  ┌────────────────────┬────────┬─────────────────────────────────────────┐
+  │ Component          │ Weight │ Calculation                             │
+  ├────────────────────┼────────┼─────────────────────────────────────────┤
+  │ Solve Speed        │  0.25  │ Avg time-to-AC vs expected for rating   │
+  │ Difficulty Range   │  0.20  │ Weighted avg difficulty of AC problems  │
+  │ Battle Performance │  0.25  │ Elo rating from battles                 │
+  │ Contest Performance│  0.20  │ Elo delta from contests                 │
+  │ Consistency        │  0.10  │ Solve streak * recency weight           │
+  └────────────────────┴────────┴─────────────────────────────────────────┘
+
+  Rating Tiers:
+  0–999: Beginner | 1000–1399: Learner | 1400–1799: Competitor
+  1800–2199: Expert | 2200–2599: Master | 2600+: Grandmaster
+  </div>
+
+  <h2 class="section-title">Rating Worker</h2>
+  <pre>// Triggered after: battle end, contest end, daily solve
+async function recalculateRating(userId) {
+  const [solveComponent, battleComponent, contestComponent, consistencyComponent] =
+    await Promise.all([
+      calcSolveComponent(userId),
+      calcBattleElo(userId),
+      calcContestPerformance(userId),
+      calcConsistency(userId)
+    ]);
+
+  const newRating = Math.round(
+    solveComponent    * 0.25 +
+    difficultyRange   * 0.20 +
+    battleComponent   * 0.25 +
+    contestComponent  * 0.20 +
+    consistencyScore  * 0.10
+  );
+
+  await User.findByIdAndUpdate(userId, { mcmRating: newRating });
+  await redis.publish(`rating:updated:${userId}`, JSON.stringify({ newRating }));
+
+  // Save to rating history
+  await Rating.create({ userId, rating: newRating, trigger: 'battle', timestamp: new Date() });
+}</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §29 — CROSS-FEATURE DATA FLOW
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§29 — Integration</div>
+  <h1 class="page-title">Cross-Feature Data Integration Map</h1>
+  <p class="page-subtitle">Every feature produces data that feeds other features. Understanding this data flow is critical for consistent implementation.</p>
+
+  <h2 class="section-title">Data Flow From Submissions</h2>
+  <div class="arch-box">
+  User submits code
+         │
+         ▼
+  Submission saved to MongoDB (verdict, time, tags, difficulty)
+         │
+         ├──► solveMap updated on User doc
+         │         │
+         │         ├──► POTD status: "solved" badge shown
+         │         ├──► Revision queue: WA/TLE → spaced repeat
+         │         └──► Streak: if AC today → streak++
+         │
+         ├──► Analytics aggregation invalidated (Redis del)
+         │         │
+         │         └──► 10min cache rebuild on next request
+         │
+         ├──► Rating recalc enqueued (if battle/contest)
+         │
+         └──► AI Mentor context refreshed (next session)
+  </div>
+
+  <h2 class="section-title">Data Flow From CF Sync</h2>
+  <div class="arch-box">
+  User triggers CF Sync
+         │
+         ▼
+  CF API: user.status → all CF submissions fetched
+         │
+         ▼
+  cfsubmissions collection populated
+         │
+         ├──► solveMap backdated (CF AC problems marked as solved)
+         ├──► Analytics updated (CF data included in tag accuracy)
+         ├──► AI Mentor context: "user has solved X problems on CF"
+         └──► Rating: CF rating used in composite (difficulty range component)
+  </div>
+
+  <h2 class="section-title">Feature → Data Dependencies (Full Map)</h2>
+  <table>
+    <thead>
+      <tr><th>Feature</th><th>Data It Produces</th><th>Data It Consumes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Practice / Problems</td><td>Submissions</td><td>Problems DB, solveMap, user rating</td></tr>
+      <tr><td>POTD</td><td>—</td><td>Submissions (solved status), problems DB, Redis POTD cache</td></tr>
+      <tr><td>Battles</td><td>Battle doc, submissions, rating events</td><td>Problems DB, user rating, WebSocket</td></tr>
+      <tr><td>Contests</td><td>Contest standings, submissions, rating events</td><td>Problems DB, user pool, live WebSocket</td></tr>
+      <tr><td>Analytics</td><td>—</td><td>Submissions, CF submissions, battle results, contest results</td></tr>
+      <tr><td>AI Mentor</td><td>Prescriptions, generated problems</td><td>Analytics, solveMap, roadmapProgress, recent submissions</td></tr>
+      <tr><td>Revision</td><td>Revision schedule</td><td>Submissions (WA/TLE), last attempt dates</td></tr>
+      <tr><td>Sheets</td><td>Sheet docs with problem lists</td><td>Problems DB, user solveMap (progress)</td></tr>
+      <tr><td>Roadmap</td><td>UserRoadmap progress</td><td>Submissions (completion), problems DB</td></tr>
+      <tr><td>Rating</td><td>Updated mcmRating</td><td>Battles, contests, submissions, streak</td></tr>
+      <tr><td>Leaderboard</td><td>—</td><td>Users (mcmRating sorted)</td></tr>
+      <tr><td>Notifications</td><td>Notification docs</td><td>Battles, contests, streak, friend activity</td></tr>
+      <tr><td>CF Sync</td><td>cfsubmissions, updated solveMap</td><td>CF API, users.cfHandle</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §30 — AUTH FLOW
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§30 — Auth</div>
+  <h1 class="page-title">Auth &amp; Session Flow</h1>
+
+  <h2 class="section-title">Auth Methods</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">📧 Email + OTP</div>
+      <div class="card-body">1. User enters email. 2. Backend generates 6-digit OTP, stores in Redis with 10min TTL (<code>otp:{email}</code>). 3. OTP sent via email (Resend/SendGrid). 4. User enters OTP → verified → JWT issued. No stored passwords. OTP is rate-limited (3 attempts max per 10min).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔵 Google OAuth 2.0</div>
+      <div class="card-body">1. User clicks "Sign in with Google". 2. Redirect to <code>/auth/google</code> (Passport.js). 3. Google callback at <code>/auth/callback</code>. 4. Passport creates/updates User doc with <code>googleId</code>. 5. JWT issued. 6. Frontend redirect to <code>/auth/callback?token=...</code> → stored in localStorage.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">JWT Structure</h2>
+  <pre>{
+  // Header
+  { "alg": "HS256", "typ": "JWT" }
+
+  // Payload
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "role": "user",                // "user" | "mod" | "admin"
+    "iat": 1713100800,
+    "exp": 1713705600              // 7 days expiry
+  }
+}</pre>
+
+  <h2 class="section-title">Middleware Chain</h2>
+  <pre>// Applied to all /dashboard/* and /api/protected/* routes
+const authMiddleware = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.userId).select('-passwordHash').lean();
+    if (!req.user || req.user.isBanned) return res.status(403).json({ error: 'Forbidden' });
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token expired or invalid' });
+  }
+};
+
+// Role guard for admin routes
+const requireRole = (role) => (req, res, next) => {
+  if (req.user.role !== role && req.user.role !== 'admin')
+    return res.status(403).json({ error: 'Insufficient permissions' });
+  next();
+};</pre>
+
+  <h2 class="section-title">OTP Security Details</h2>
+  <ul>
+    <li>OTP is a cryptographically random 6-digit number: <code>crypto.randomInt(100000, 999999)</code></li>
+    <li>Redis key: <code>otp:{email}</code>, TTL: 600 seconds (10 min)</li>
+    <li>Attempt counter: <code>otp:attempts:{email}</code> — auto-expires with OTP key</li>
+    <li>After 3 failed attempts: key deleted, user must request new OTP</li>
+    <li>OTP is never logged or returned in API responses</li>
+  </ul>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §31 — SECURITY
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§31 — Security</div>
+  <h1 class="page-title">Security Considerations</h1>
+
+  <h2 class="section-title">OWASP Top 10 Mitigations</h2>
+  <table>
+    <thead>
+      <tr><th>Threat</th><th>Mitigation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Injection (NoSQL/SQL)</td><td>Mongoose ODM with typed schemas. Never string-interpolate user input into queries. Use <code>$eq</code> operators explicitly.</td></tr>
+      <tr><td>Broken Authentication</td><td>JWT with short expiry (7d). OTP rate-limited. bcrypt for any stored passwords (cost factor 12). Revoke on ban.</td></tr>
+      <tr><td>Sensitive Data Exposure</td><td>Passwords never stored plaintext. OTPs never logged. JWT secret in env vars only. HTTPS enforced in prod.</td></tr>
+      <tr><td>Security Misconfiguration</td><td>helmet.js headers. CORS restricted to allowed origins. No debug logs in production. Env vars via dotenv + secrets manager.</td></tr>
+      <tr><td>XSS</td><td>React escapes by default. Content-Security-Policy header. Problem statements rendered via a Markdown sanitizer (DOMPurify).</td></tr>
+      <tr><td>IDOR</td><td>All resources validated against <code>req.user.userId</code>. Users cannot read other users' private data, submissions, or AI problems.</td></tr>
+      <tr><td>Rate Limiting</td><td>express-rate-limit + Redis sliding window. Per-endpoint limits: /auth 5/min, /submissions 3/10s, /ai/chat 20/min.</td></tr>
+      <tr><td>Code Execution (RCE)</td><td>All code runs in Docker containers with <code>--network none</code>, seccomp profile, read-only FS, non-root user, resource caps.</td></tr>
+      <tr><td>Admin Privilege Escalation</td><td>Role stored in JWT. Admin role only assignable by existing admin via <code>PUT /admin/users/:id/role</code> (requires re-auth).</td></tr>
+      <tr><td>Dependency Vulnerabilities</td><td>Dependabot + <code>npm audit</code> in CI. Pin major versions. Regular updates.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">API Key &amp; Secret Management</h2>
+  <pre># .env (development — never committed)
+JWT_SECRET=&lt;256-bit random hex&gt;
+MONGODB_URI=mongodb+srv://...
+REDIS_URL=redis://localhost:6379
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+OPENAI_API_KEY=...
+RESEND_API_KEY=...
+CF_API_KEY=...                   # Optional: for higher CF API rate limits
+
+# Production: use Docker Secrets or cloud secrets manager (AWS Secrets Manager, etc.)</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §32 — DEPLOYMENT
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§32 — Deployment</div>
+  <h1 class="page-title">Deployment &amp; DevOps</h1>
+
+  <h2 class="section-title">Docker Compose (Local Dev)</h2>
+  <pre>version: '3.9'
+services:
+  api:
+    build: ./backend
+    ports: ["3000:3000"]
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/mycpmentor
+      - REDIS_URL=redis://redis:6379
+    depends_on: [mongo, redis]
+
+  ai-service:
+    build: ./ai-service
+    ports: ["5000:5000"]
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  test-runner:
+    build: ./test-runner
+    ports: ["4000:4000"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker
+    privileged: true
+
+  cf-scraper:
+    build: ./cf-scraper
+    ports: ["6000:6000"]
+    depends_on: [redis, mongo]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:</pre>
+
+  <h2 class="section-title">Production Architecture (Kubernetes)</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">API Gateway (2+ replicas)</div>
+      <div class="card-body">Deployment with HPA (scale on CPU/RPS). Behind an Ingress with TLS termination. Sticky sessions for WebSocket via session affinity.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Test Runner (auto-scale)</div>
+      <div class="card-body">Dedicated node pool with privileged containers (Docker-in-Docker). Scale up during contest events. Scale down during off-hours.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Redis Cluster</div>
+      <div class="card-body">Redis Sentinel for HA. Separate instances for cache (eviction) and Bull queue broker (persistence required).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">MongoDB Atlas</div>
+      <div class="card-body">M10+ cluster with replica set. Automated backups, index advisor, and slow query alerts.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">CI/CD Pipeline (GitHub Actions)</h2>
+  <pre>on: push to main
+
+jobs:
+  test:
+    - npm install
+    - npm run lint
+    - npm test (Jest unit tests)
+
+  build:
+    - docker build each service
+    - push to container registry (GHCR)
+
+  deploy (if tests pass):
+    - kubectl rollout
+    - Health check wait
+    - Notify team on Slack</pre>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     §33 — IMPLEMENTATION ROADMAP
+════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-tag">§33 — Roadmap</div>
+  <h1 class="page-title">Implementation Roadmap</h1>
+  <p class="page-subtitle">Recommended build order for a team of 2–4 developers. Each phase is independently deployable.</p>
+
+  <h2 class="section-title">Phase 1 — Foundation (Weeks 1–3)</h2>
+  <div class="callout callout-violet">
+    Goal: Working auth, problem display, and manual code submission with judging.
+  </div>
+  <ul>
+    <li>✅ Auth system (Email OTP + Google OAuth + JWT)</li>
+    <li>✅ Basic frontend shell (landing page + dashboard layout)</li>
+    <li>⬜ MongoDB schemas for User, Problem, Submission</li>
+    <li>⬜ CF API sync for problem metadata (stubs)</li>
+    <li>⬜ Problem listing + detail page with Monaco editor</li>
+    <li>⬜ Test Runner v1 (Docker sandbox, C++ + Python)</li>
+    <li>⬜ Submission queue + SSE verdict stream</li>
+  </ul>
+
+  <h2 class="section-title">Phase 2 — Core Features (Weeks 4–6)</h2>
+  <div class="callout callout-emerald">
+    Goal: Full practice loop with POTD, sheets, analytics, and CF sync.
+  </div>
+  <ul>
+    <li>⬜ CF HTML scraper (statements + sample tests)</li>
+    <li>⬜ POTD scheduler (nightly cron + Redis cache)</li>
+    <li>⬜ Analytics aggregation pipeline</li>
+    <li>⬜ Sheets (CRUD, problem lists, progress tracking)</li>
+    <li>⬜ CF Sync (pull user submissions via CF API)</li>
+    <li>⬜ Revision queue (spaced repetition on WA/TLE)</li>
+    <li>⬜ Composite rating calculator (v1 — solve-only)</li>
+  </ul>
+
+  <h2 class="section-title">Phase 3 — Competition Layer (Weeks 7–9)</h2>
+  <div class="callout callout-orange">
+    Goal: Live battles, contests, and full Elo-based rating system.
+  </div>
+  <ul>
+    <li>⬜ WebSocket server (Socket.io)</li>
+    <li>⬜ 1v1 Battles (challenge, matchmaking, live verdict sync)</li>
+    <li>⬜ Contests (creation, registration, live standings)</li>
+    <li>⬜ Full composite rating (battles + contests components)</li>
+    <li>⬜ Leaderboard (global + weekly + friends)</li>
+  </ul>
+
+  <h2 class="section-title">Phase 4 — AI Layer (Weeks 10–12)</h2>
+  <div class="callout callout-blue">
+    Goal: AI Mentor chat, AI problem generation, personalized POTD.
+  </div>
+  <ul>
+    <li>⬜ AI Service (FastAPI/Node.js + OpenAI SDK)</li>
+    <li>⬜ AI Mentor chat with user context injection</li>
+    <li>⬜ AI problem generation + self-verification pipeline</li>
+    <li>⬜ Roadmap + AI-generated personalized study plan</li>
+    <li>⬜ Personalized POTD v2 (per-user AI selection)</li>
+  </ul>
+
+  <h2 class="section-title">Phase 5 — Extension &amp; Community (Weeks 13–15)</h2>
+  <div class="callout callout-emerald">
+    Goal: Browser extension, community features, notification system.
+  </div>
+  <ul>
+    <li>⬜ Chrome extension (Manifest V3, content script, popup)</li>
+    <li>⬜ CF submission interception + auto-sync</li>
+    <li>⬜ In-page problem sidebar injection</li>
+    <li>⬜ Community (friends, groups, discussion threads)</li>
+    <li>⬜ Notification system (email + push + in-app)</li>
+    <li>⬜ Admin panel (user management, problem bank, moderation)</li>
+  </ul>
+
+  <h2 class="section-title">Phase 6 — Polish &amp; Scale (Weeks 16+)</h2>
+  <ul>
+    <li>⬜ Mobile-responsive polish across all dashboard pages</li>
+    <li>⬜ Performance: DB query optimization, Redis pre-warming</li>
+    <li>⬜ Monitoring: Prometheus + Grafana dashboards</li>
+    <li>⬜ Kubernetes migration + auto-scaling rules</li>
+    <li>⬜ Public API for third-party integrations</li>
+    <li>⬜ iOS/Android PWA (push notifications)</li>
+  </ul>
+
+  <hr />
+
+  <div class="callout callout-violet">
+    <strong>📌 Developer Quick Start</strong>
+    1. Clone repo → <code>cp .env.example .env</code> → fill in secrets<br/>
+    2. <code>docker-compose up</code> → all services start on local ports<br/>
+    3. <code>cd frontend && npm install && npm run dev</code> → open localhost:5173<br/>
+    4. Seed DB: <code>node backend/scripts/seedProblems.js</code> (pulls CF API stubs)<br/>
+    5. For AI features: add <code>OPENAI_API_KEY</code> to .env<br/>
+    6. For extension: <code>cd extension && npm run build</code> → load <code>dist/</code> in chrome://extensions
+  </div>
+</div>
+
+</body>
+</html>

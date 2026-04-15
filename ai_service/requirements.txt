@@ -1,0 +1,9 @@
+google-generativeai==0.8.3
+aio-pika==9.4.3
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.4
+httpx==0.28.1
+python-dotenv==1.0.1
+motor==3.6.0        # async MongoDB driver (to update ProblemRequest status)
+tenacity==9.0.0     # retry library for Gemini rate-limit handling

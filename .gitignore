@@ -1,0 +1,72 @@
+# ── Environment / Secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Node.js (backend + frontend) ──────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+package-lock.json.bak
+
+# ── Frontend build output ──────────────────────────────────────────────────────
+frontend/dist/
+frontend/.vite/
+
+# ── Python (ai_service) ───────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+ai_service/.venv/
+ai_service/venv/
+ai_service/env/
+.venv/
+*.pyo
+
+# ── Python test artifacts ──────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ── OS generated ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ── Editors / IDEs ────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*.orig
+*.bak
+*.tmp
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+*.log.*
+
+# ── Test / Generated files ────────────────────────────────────────────────────
+coverage/
+test-results/
+generated_testcases/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+.cache/
+.turbo/
+.parcel-cache/
