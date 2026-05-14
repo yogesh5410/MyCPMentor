@@ -1,7 +1,7 @@
 /**
  * routes/problem.routes.js
  *
- * All routes for AI problem-creation requests and coin wallet.
+ * Problem browsing (public published problems) + coin wallet.
  *
  * Base: /api/problems
  */
@@ -14,22 +14,27 @@ const {
   listMyProblemRequests,
   getCoinBalance,
 } = require('../controllers/problemRequest.controller')
+const { listPublished, getProblemBySlug } = require('../controllers/problem.controller')
 
 const router = express.Router()
 
-// All routes require authentication
+// ── Public problem browsing (requires login) ──────────────────────────────────
+// GET  /api/problems        → paginated list of published problems
+router.get('/', requireAuth, listPublished)
+
+// All routes below require authentication
 router.use(requireAuth)
 
 // ── AI Problem Generation ────────────────────────────────────────────────────
-// POST   /api/problems/request       → submit a new AI problem request
-// GET    /api/problems/requests      → list current user's requests
-// GET    /api/problems/request/:id   → poll status of a specific request
 router.post('/request', createProblemRequest)
 router.get('/requests', listMyProblemRequests)
 router.get('/request/:id', getProblemRequestStatus)
 
 // ── Coin Wallet ───────────────────────────────────────────────────────────────
-// GET    /api/problems/coins         → get balance + recent transaction history
 router.get('/coins', getCoinBalance)
+
+// ── Problem detail — must be last to avoid matching static paths above ────────
+// GET  /api/problems/:slug  → full problem detail (no private TCs)
+router.get('/:slug', getProblemBySlug)
 
 module.exports = router

@@ -8,9 +8,9 @@ import DashboardLayout from './layouts/DashboardLayout'
 import Overview from './pages/dashboard/Overview'
 import POTD from './pages/dashboard/POTD'
 import Roadmap from './pages/dashboard/Roadmap'
-import AIMentor from './pages/dashboard/AIMentor'
 import Practice from './pages/dashboard/Practice'
 import Problems from './pages/dashboard/Problems'
+import ProblemSolvePage from './pages/dashboard/ProblemSolvePage'
 import Sheets from './pages/dashboard/Sheets'
 import Revision from './pages/dashboard/Revision'
 import Battles from './pages/dashboard/Battles'
@@ -25,6 +25,7 @@ import CreateProblem from './pages/dashboard/CreateProblem'
 import MyRequests from './pages/dashboard/MyRequests'
 import AdminUsers from './pages/dashboard/admin/AdminUsers'
 import AdminProblemReview from './pages/dashboard/admin/AdminProblemReview'
+import AdminProblems from './pages/dashboard/admin/AdminProblems'
 import AdminContests from './pages/dashboard/admin/AdminContests'
 import AdminModeration from './pages/dashboard/admin/AdminModeration'
 import AdminSystem from './pages/dashboard/admin/AdminSystem'
@@ -70,9 +71,9 @@ function App() {
               <Route index element={<Overview />} />
               <Route path="potd" element={<POTD />} />
               <Route path="roadmap" element={<Roadmap />} />
-              <Route path="ai-mentor" element={<AIMentor />} />
               <Route path="practice" element={<Practice />} />
               <Route path="problems" element={<Problems />} />
+              <Route path="problems/:slug" element={<ProblemSolvePage />} />
               <Route path="sheets" element={<Sheets />} />
               <Route path="revision" element={<Revision />} />
               <Route path="battles" element={<Battles />} />
@@ -87,6 +88,7 @@ function App() {
               <Route path="my-requests" element={<MyRequests />} />
               <Route path="admin/users" element={<AdminUsers />} />
               <Route path="admin/problems" element={<AdminProblemReview />} />
+              <Route path="admin/ai-problems" element={<AdminProblems />} />
               <Route path="admin/contests" element={<AdminContests />} />
               <Route path="admin/moderation" element={<AdminModeration />} />
               <Route path="admin/system" element={<AdminSystem />} />

@@ -41,7 +41,7 @@ const revisionDue = [
 
 const quickNav = [
   { to: '/dashboard/potd', label: "Today's POTD", desc: 'Solve the daily challenge', icon: '📅', color: 'bg-blue-500' },
-  { to: '/dashboard/ai-mentor', label: 'Ask AI Mentor', desc: 'Get hints & explanations', icon: '🤖', color: 'bg-violet-500' },
+  { to: '/dashboard/practice', label: 'Practice', desc: 'Drill your weak topics', icon: '⚡', color: 'bg-violet-500' },
   { to: '/dashboard/battles', label: 'Quick Battle', desc: 'Find a 1v1 opponent now', icon: '⚔️', color: 'bg-red-500' },
   { to: '/dashboard/revision', label: 'Start Revision', desc: '3 problems due today', icon: '🔄', color: 'bg-emerald-500' },
 ]

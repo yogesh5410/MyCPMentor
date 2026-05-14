@@ -14,7 +14,6 @@ const NAV_GROUPS = [
     items: [
       { to: '/dashboard/potd', label: 'POTD', icon: 'calendar' },
       { to: '/dashboard/roadmap', label: 'Roadmap', icon: 'map' },
-      { to: '/dashboard/ai-mentor', label: 'AI Mentor', icon: 'bot' },
     ],
   },
   {
@@ -56,6 +55,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/dashboard/admin/users', label: 'User Management', icon: 'users' },
       { to: '/dashboard/admin/problems', label: 'Problem Bank', icon: 'database' },
+      { to: '/dashboard/admin/ai-problems', label: 'AI Problem Factory', icon: 'sparkle' },
       { to: '/dashboard/admin/contests', label: 'Contest Manager', icon: 'flag' },
       { to: '/dashboard/admin/moderation', label: 'Moderation', icon: 'shield' },
       { to: '/dashboard/admin/system', label: 'System Health', icon: 'server' },

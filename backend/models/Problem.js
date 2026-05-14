@@ -50,6 +50,26 @@ const problemSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    inputFormat: {
+      type: String,
+      default: '',
+    },
+    outputFormat: {
+      type: String,
+      default: '',
+    },
+    sampleInput: {
+      type: String,
+      default: '',
+    },
+    sampleOutput: {
+      type: String,
+      default: '',
+    },
+    sampleExplanation: {
+      type: String,
+      default: '',
+    },
     constraints: {
       type: String,
       required: true,
@@ -85,15 +105,15 @@ const problemSchema = new mongoose.Schema(
     publicTests: {
       type: [testCaseSchema],
       validate: {
-        validator: (v) => v.length === 2,
-        message: 'Exactly 2 public test cases are required.',
+        validator: (v) => v.length >= 1 && v.length <= 2,
+        message: '1–2 public test cases are required.',
       },
     },
     privateTests: {
       type: [testCaseSchema],
       validate: {
-        validator: (v) => v.length === 10,
-        message: 'Exactly 10 private test cases are required.',
+        validator: (v) => v.length >= 1 && v.length <= 10,
+        message: '1–10 private test cases are required.',
       },
     },
 
@@ -115,6 +135,11 @@ const problemSchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'admin'],
       required: true,
+    },
+    // AI generation job id (Redis key suffix) — set when creatorRole='admin' + AI-generated
+    aiJobId: {
+      type: String,
+      default: null,
     },
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -154,7 +179,7 @@ problemSchema.index({ createdBy: 1 })
 problemSchema.index({ status: 1, createdAt: -1 })
 
 // ── Pre-save: generate slug from title ───────────────────────────────────────
-problemSchema.pre('save', function (next) {
+problemSchema.pre('save', async function () {
   if (this.isModified('title') || !this.slug) {
     this.slug =
       this.title
@@ -165,7 +190,6 @@ problemSchema.pre('save', function (next) {
       '-' +
       Date.now().toString(36) // suffix avoids collisions
   }
-  next()
 })
 
 module.exports = mongoose.model('Problem', problemSchema)

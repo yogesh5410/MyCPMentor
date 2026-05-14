@@ -1,183 +1,147 @@
 /**
- * pages/dashboard/admin/AdminProblemReview.jsx
+ * AdminProblemReview.jsx
  *
- * Full admin interface for reviewing AI-generated problems.
- *
- * Layout:
- *   Left panel  — paginated queue of problems pending review
- *   Right panel — full detail of the selected problem:
- *                  statement, constraints, solution (cpp), all 12 test cases
- *                  + Publish / Reject actions
- *
- * API:
- *   GET  /api/admin/problems/review            — queue list
- *   GET  /api/admin/problems/review/:id        — full detail
- *   POST /api/admin/problems/review/:id/publish
- *   POST /api/admin/problems/review/:id/reject
+ * Admin queue for reviewing AI-generated problems that are in `pending_review`
+ * status. Admin can read the full problem statement, inspect test cases, then
+ * Approve (→ published) or Reject with a reason.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import api from '../../../lib/api'
 
-// ─── Difficulty badge ─────────────────────────────────────────────────────────
-function DiffBadge({ difficulty }) {
-  const s = {
-    easy:   'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700',
-    medium: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700',
-    hard:   'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700',
-  }[difficulty] || 'bg-gray-100 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700'
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
+const DIFF_COLOR = {
+  easy: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+  medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  hard: 'text-red-400 bg-red-400/10 border-red-400/20',
+}
+
+const STATUS_COLOR = {
+  pending_review: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  published: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+  rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
+}
+
+const STATUS_LABEL = {
+  pending_review: '⏳ Pending',
+  published: '✅ Published',
+  rejected: '❌ Rejected',
+}
+
+function Badge({ label, colorClass }) {
   return (
-    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${s}`}>
-      {difficulty}
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}>
+      {label}
     </span>
   )
 }
 
-// ─── Code block ───────────────────────────────────────────────────────────────
-function CodeBlock({ code, lang = 'cpp' }) {
-  const [copied, setCopied] = useState(false)
-  const copy = () => {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
+function ProblemRow({ problem, selected, onClick }) {
   return (
-    <div className="relative bg-gray-950 rounded-xl overflow-hidden border border-gray-700/50">
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700/50">
-        <span className="text-xs text-gray-500 font-mono">{lang}</span>
-        <button
-          onClick={copy}
-          className="text-xs text-gray-400 hover:text-gray-200 transition-colors font-medium"
-        >
-          {copied ? '✅ Copied' : '📋 Copy'}
-        </button>
-      </div>
-      <pre className="text-xs text-gray-200 p-4 overflow-x-auto leading-relaxed font-mono whitespace-pre">
-        {code}
-      </pre>
-    </div>
-  )
-}
-
-// ─── Test cases table ─────────────────────────────────────────────────────────
-function TestCasesTable({ tests, label, color }) {
-  const colorMap = {
-    blue:   'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-300',
-    gray:   'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700/60 text-gray-600 dark:text-gray-400',
-  }
-
-  if (!tests || tests.length === 0) {
-    return (
-      <p className="text-sm text-gray-400 italic">No test cases available.</p>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      {tests.map((tc, i) => (
-        <div key={i} className={`rounded-xl border overflow-hidden ${colorMap[color]}`}>
-          <div className="px-3 py-1.5 text-xs font-semibold border-b border-current/20">
-            {label} #{i + 1}
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-current/10">
-            <div className="p-3">
-              <p className="text-xs font-medium mb-1 opacity-70">Input</p>
-              <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">{tc.input || '(empty)'}</pre>
-            </div>
-            <div className="p-3">
-              <p className="text-xs font-medium mb-1 opacity-70">Expected Output</p>
-              <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">{tc.output || '(empty)'}</pre>
-            </div>
-          </div>
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-4 py-3 rounded-lg border transition-all cursor-pointer ${
+        selected
+          ? 'border-violet-500/60 bg-violet-500/10'
+          : 'border-white/8 bg-white/3 hover:bg-white/6'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-white truncate">{problem.title}</p>
+          <p className="text-xs text-white/40 mt-0.5">
+            {new Date(problem.createdAt).toLocaleDateString()}
+            {problem.aiJobId && (
+              <span className="ml-2 text-violet-400">AI-generated</span>
+            )}
+          </p>
         </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Reject modal ─────────────────────────────────────────────────────────────
-function RejectModal({ onConfirm, onCancel, loading }) {
-  const [reason, setReason] = useState('')
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl w-full max-w-md">
-        <div className="p-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Reject Problem</h3>
-          <p className="text-sm text-gray-500 mb-4">Provide a reason so the creator knows what to improve.</p>
-          <textarea
-            autoFocus
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="E.g. The solution time complexity is incorrect, or the test cases don't cover edge cases…"
-            rows={4}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400/50 resize-none"
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <Badge
+            label={problem.difficulty}
+            colorClass={DIFF_COLOR[problem.difficulty] || DIFF_COLOR.medium}
           />
-          <p className="mt-1 text-xs text-gray-400">{reason.length} / 500</p>
-        </div>
-        <div className="flex gap-3 px-6 pb-6">
-          <button
-            onClick={() => onConfirm(reason)}
-            disabled={reason.trim().length < 5 || loading}
-            className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Rejecting…' : 'Confirm Reject'}
-          </button>
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            Cancel
-          </button>
+          <Badge
+            label={STATUS_LABEL[problem.status] || problem.status}
+            colorClass={STATUS_COLOR[problem.status] || 'text-white/60 border-white/20'}
+          />
         </div>
       </div>
-    </div>
+      {problem.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {problem.tags.slice(0, 4).map((t) => (
+            <span
+              key={t}
+              className="px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-white/50"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+    </button>
   )
 }
 
-// ─── Detail panel ─────────────────────────────────────────────────────────────
-function ProblemDetail({ problemId, onReviewed }) {
-  const [problem, setProblem] = useState(null)
+function SectionHeading({ children }) {
+  return (
+    <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">
+      {children}
+    </h3>
+  )
+}
+
+function CodeBlock({ code }) {
+  return (
+    <pre className="bg-black/40 border border-white/8 rounded-lg p-3 text-xs font-mono text-green-300 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
+      {code || '(empty)'}
+    </pre>
+  )
+}
+
+function ProblemDetail({ problemId, onApprove, onReject }) {
+  const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('statement')
+  const [rejectModal, setRejectModal] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
-  const [actionMsg, setActionMsg] = useState(null) // { type: 'success'|'error', text }
-  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => {
+    if (!problemId) return
     setLoading(true)
-    setActionMsg(null)
-    api.get(`/api/admin/problems/review/${problemId}`)
-      .then(({ data }) => { setProblem(data.problem); setLoading(false) })
-      .catch(() => setLoading(false))
+    setActionError('')
+    api
+      .get(`/api/admin/ai-problems/${problemId}`)
+      .then((r) => setDetail(r.data))
+      .catch(() => setDetail(null))
+      .finally(() => setLoading(false))
   }, [problemId])
 
-  const handlePublish = async () => {
+  const handleApprove = async () => {
     setActionLoading(true)
-    setActionMsg(null)
+    setActionError('')
     try {
-      const { data } = await api.post(`/api/admin/problems/review/${problemId}/publish`)
-      setActionMsg({
-        type: 'success',
-        text: `✅ Published! ${data.rewardGranted ? `Creator rewarded ${data.rewardAmount} coins.` : ''}`,
-      })
-      onReviewed(problemId)
-    } catch (err) {
-      setActionMsg({ type: 'error', text: err.response?.data?.error || 'Publish failed.' })
+      await api.post(`/api/admin/ai-problems/${problemId}/approve`)
+      onApprove(problemId)
+    } catch (e) {
+      setActionError(e.response?.data?.error || 'Approval failed')
     } finally {
       setActionLoading(false)
     }
   }
 
-  const handleReject = async (reason) => {
+  const handleReject = async () => {
     setActionLoading(true)
+    setActionError('')
     try {
-      await api.post(`/api/admin/problems/review/${problemId}/reject`, { reason })
-      setActionMsg({ type: 'success', text: '❌ Problem rejected and creator notified.' })
-      setShowRejectModal(false)
-      onReviewed(problemId)
-    } catch (err) {
-      setActionMsg({ type: 'error', text: err.response?.data?.error || 'Reject failed.' })
+      await api.post(`/api/admin/ai-problems/${problemId}/reject`, { reason: rejectReason })
+      setRejectModal(false)
+      onReject(problemId)
+    } catch (e) {
+      setActionError(e.response?.data?.error || 'Rejection failed')
     } finally {
       setActionLoading(false)
     }
@@ -185,334 +149,393 @@ function ProblemDetail({ problemId, onReviewed }) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <svg className="w-8 h-8 animate-spin text-violet-500 mx-auto mb-3" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="20" />
-          </svg>
-          <p className="text-sm text-gray-400">Loading problem…</p>
-        </div>
+      <div className="flex items-center justify-center h-64 text-white/40">
+        Loading problem…
       </div>
     )
   }
 
-  if (!problem) {
+  if (!detail) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-gray-400">Problem not found.</p>
+      <div className="flex items-center justify-center h-64 text-red-400">
+        Failed to load problem detail
       </div>
     )
   }
 
-  const isReviewed = problem.status !== 'pending_review'
+  const tabs = [
+    { id: 'statement', label: 'Statement' },
+    { id: 'samples', label: 'Samples' },
+    { id: 'solution', label: 'Solution' },
+    { id: 'tests', label: `Tests (${(detail.publicTests?.length || 0) + (detail.privateTests?.length || 0)})` },
+  ]
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="p-6 space-y-6">
-
-        {/* Action result message */}
-        {actionMsg && (
-          <div className={`px-4 py-3 rounded-xl text-sm font-medium border ${
-            actionMsg.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300'
-              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-300'
-          }`}>
-            {actionMsg.text}
-          </div>
-        )}
-
-        {/* Title + meta */}
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 p-4 border-b border-white/8">
         <div>
-          <div className="flex items-start gap-3 flex-wrap mb-3">
-            <h2 className="text-xl font-black text-gray-900 dark:text-white flex-1 min-w-0">
-              {problem.title}
-            </h2>
-            <DiffBadge difficulty={problem.difficulty} />
-          </div>
-
-          <div className="flex flex-wrap gap-2 mb-3">
-            {problem.tags?.map((t) => (
-              <span key={t} className="text-xs px-2.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/50 font-medium">
+          <h2 className="text-lg font-semibold text-white">{detail.title}</h2>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <Badge
+              label={detail.difficulty}
+              colorClass={DIFF_COLOR[detail.difficulty] || DIFF_COLOR.medium}
+            />
+            <Badge
+              label={STATUS_LABEL[detail.status] || detail.status}
+              colorClass={STATUS_COLOR[detail.status] || 'text-white/60 border-white/20'}
+            />
+            {detail.tags?.map((t) => (
+              <span
+                key={t}
+                className="px-2 py-0.5 rounded-full text-xs bg-white/5 text-white/50 border border-white/10"
+              >
                 {t}
               </span>
             ))}
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            {[
-              { label: 'Time Limit', value: `${problem.timeLimitMs}ms` },
-              { label: 'Memory Limit', value: `${problem.memoryLimitMb}MB` },
-              { label: 'Optimal Time', value: problem.optimalTimeComplexity },
-              { label: 'Optimal Space', value: problem.optimalSpaceComplexity },
-            ].map((item) => (
-              <div key={item.label} className="bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-2">
-                <p className="text-gray-400 mb-0.5">{item.label}</p>
-                <p className="font-bold text-gray-800 dark:text-gray-200 font-mono">{item.value}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Creator info */}
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/50 text-sm">
-          <span className="text-xl">👤</span>
-          <div className="flex-1 min-w-0">
-            <span className="font-semibold text-gray-800 dark:text-gray-200">
-              {problem.createdBy?.name || problem.createdBy?.email || 'Unknown'}
-            </span>
-            <span className="text-gray-400 ml-2">({problem.creatorRole})</span>
-          </div>
-          <span className="text-gray-400 shrink-0 text-xs">
-            {new Date(problem.createdAt).toLocaleDateString()}
-          </span>
-        </div>
-
-        {/* AI Review notes */}
-        {problem.requestId?.generations?.review?.notes && (
-          <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/40 rounded-xl p-4">
-            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1.5">
-              🔍 AI Review Notes
-            </p>
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              {problem.requestId.generations.review.notes}
-            </p>
-            <p className={`mt-1.5 text-xs font-bold ${problem.requestId.generations.review.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              AI verdict: {problem.requestId.generations.review.passed ? '✅ Passed' : '⚠️ Issues detected'}
-            </p>
-          </div>
-        )}
-
-        {/* Description */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Problem Description</h3>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-            {problem.description}
-          </div>
-        </div>
-
-        {/* Constraints */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Constraints</h3>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
-            {problem.constraints}
-          </div>
-        </div>
-
-        {/* C++ Solution */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">C++ Solution</h3>
-          <CodeBlock code={problem.solutionCpp} lang="cpp" />
-        </div>
-
-        {/* Public test cases (2) */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Public Test Cases ({problem.publicTests?.length || 0})
-          </h3>
-          <TestCasesTable tests={problem.publicTests} label="Public" color="blue" />
-        </div>
-
-        {/* Private test cases (10) */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Private Test Cases ({problem.privateTests?.length || 0})
-          </h3>
-          <TestCasesTable tests={problem.privateTests} label="Private" color="gray" />
-        </div>
-
-        {/* Action buttons */}
-        {!isReviewed && (
-          <div className="flex gap-3 sticky bottom-0 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm -mx-6 px-6 pt-4 pb-6 border-t border-gray-100 dark:border-gray-800">
+        {/* Actions — only for pending_review */}
+        {detail.status === 'pending_review' && (
+          <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={handlePublish}
+              onClick={() => setRejectModal(true)}
               disabled={actionLoading}
-              className="flex-1 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-red-500/40 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {actionLoading ? 'Processing…' : '✅ Publish Problem'}
+              Reject
             </button>
             <button
-              onClick={() => setShowRejectModal(true)}
+              onClick={handleApprove}
               disabled={actionLoading}
-              className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50 transition-colors cursor-pointer"
             >
-              ❌ Reject
+              {actionLoading ? 'Publishing…' : '✅ Approve & Publish'}
             </button>
-          </div>
-        )}
-
-        {isReviewed && (
-          <div className="py-4 text-center text-sm font-medium text-gray-400">
-            This problem has already been <strong>{problem.status}</strong>.
           </div>
         )}
       </div>
 
-      {showRejectModal && (
-        <RejectModal
-          onConfirm={handleReject}
-          onCancel={() => setShowRejectModal(false)}
-          loading={actionLoading}
-        />
+      {actionError && (
+        <div className="mx-4 mt-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
+          {actionError}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex border-b border-white/8 px-4 overflow-x-auto">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
+              tab === t.id
+                ? 'border-violet-500 text-violet-400'
+                : 'border-transparent text-white/50 hover:text-white/80'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+        {tab === 'statement' && (
+          <>
+            <div>
+              <SectionHeading>Problem Statement</SectionHeading>
+              <div className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+                {detail.description}
+              </div>
+            </div>
+            {detail.constraints && (
+              <div>
+                <SectionHeading>Constraints</SectionHeading>
+                <div className="text-sm text-white/70 whitespace-pre-wrap bg-white/3 rounded-lg p-3 border border-white/8">
+                  {detail.constraints}
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Time Limit', `${detail.timeLimitMs} ms`],
+                ['Memory Limit', `${detail.memoryLimitMb} MB`],
+                ['Optimal Time', detail.optimalTimeComplexity],
+                ['Optimal Space', detail.optimalSpaceComplexity],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="bg-white/3 border border-white/8 rounded-lg p-3"
+                >
+                  <p className="text-xs text-white/40">{label}</p>
+                  <p className="text-sm text-white font-mono">{value}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === 'samples' && (
+          <>
+            {detail.inputFormat && (
+              <div>
+                <SectionHeading>Input Format</SectionHeading>
+                <div className="text-sm text-white/70 whitespace-pre-wrap">{detail.inputFormat}</div>
+              </div>
+            )}
+            {detail.outputFormat && (
+              <div>
+                <SectionHeading>Output Format</SectionHeading>
+                <div className="text-sm text-white/70 whitespace-pre-wrap">{detail.outputFormat}</div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <SectionHeading>Sample Input</SectionHeading>
+                <CodeBlock code={detail.sampleInput} />
+              </div>
+              <div>
+                <SectionHeading>Sample Output</SectionHeading>
+                <CodeBlock code={detail.sampleOutput} />
+              </div>
+            </div>
+            {detail.sampleExplanation && (
+              <div>
+                <SectionHeading>Explanation</SectionHeading>
+                <div className="text-sm text-white/70 whitespace-pre-wrap bg-white/3 rounded-lg p-3 border border-white/8">
+                  {detail.sampleExplanation}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === 'solution' && (
+          <div>
+            <SectionHeading>Reference Solution (C++ / Python)</SectionHeading>
+            <CodeBlock code={detail.solutionCpp} />
+          </div>
+        )}
+
+        {tab === 'tests' && (
+          <div className="space-y-4">
+            {detail.publicTests?.length > 0 && (
+              <div>
+                <SectionHeading>Public Test Cases ({detail.publicTests.length})</SectionHeading>
+                {detail.publicTests.map((tc, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <p className="text-xs text-white/40 mb-1">Input #{i + 1}</p>
+                      <CodeBlock code={tc.input} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/40 mb-1">Output #{i + 1}</p>
+                      <CodeBlock code={tc.output} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {detail.privateTests?.length > 0 && (
+              <div>
+                <SectionHeading>Private Test Cases ({detail.privateTests.length})</SectionHeading>
+                {detail.privateTests.map((tc, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <p className="text-xs text-white/40 mb-1">Input #{i + 1}</p>
+                      <CodeBlock code={tc.input} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/40 mb-1">Output #{i + 1}</p>
+                      <CodeBlock code={tc.output} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Reject Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-base font-semibold text-white mb-1">Reject Problem</h3>
+            <p className="text-sm text-white/50 mb-4">
+              Provide a reason (optional) — this helps improve future generations.
+            </p>
+            <textarea
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-violet-500/60 h-24"
+              placeholder="e.g. Duplicate problem, unclear statement, wrong difficulty…"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setRejectModal(false)}
+                className="flex-1 px-4 py-2 rounded-lg text-sm border border-white/10 text-white/60 hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={actionLoading}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {actionLoading ? 'Rejecting…' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
 }
 
-// ─── Queue list item ──────────────────────────────────────────────────────────
-function QueueItem({ problem, isSelected, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={[
-        'w-full text-left px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors',
-        isSelected ? 'bg-violet-50 dark:bg-violet-900/20 border-l-2 border-l-violet-500' : 'border-l-2 border-l-transparent',
-      ].join(' ')}
-    >
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{problem.title}</p>
-        <DiffBadge difficulty={problem.difficulty} />
-      </div>
-      <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
-        <span>{problem.createdBy?.name || problem.createdBy?.email}</span>
-        <span>·</span>
-        <span>{new Date(problem.createdAt).toLocaleDateString()}</span>
-        {problem.tags?.length > 0 && (
-          <>
-            <span>·</span>
-            <span className="text-violet-500 dark:text-violet-400">{problem.tags.slice(0, 2).join(', ')}</span>
-          </>
-        )}
-      </div>
-    </button>
-  )
-}
+// ── Main Component ─────────────────────────────────────────────────────────
 
-// ─── Main page ────────────────────────────────────────────────────────────────
 export default function AdminProblemReview() {
-  const [queue, setQueue]         = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState('')
-  const [page, setPage]           = useState(1)
-  const [total, setTotal]         = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
+  const [problems, setProblems] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [selectedId, setSelectedId] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('pending_review')
 
-  const fetchQueue = useCallback(async (pg = 1) => {
+  const fetchList = useCallback(async (status) => {
     setLoading(true)
+    setError('')
     try {
-      const { data } = await api.get('/api/admin/problems/review', {
-        params: { page: pg, limit: 15 },
-      })
-      setQueue(data.problems)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
-      setPage(data.page)
-      if (data.problems.length > 0 && !selectedId) {
-        setSelectedId(data.problems[0]._id)
+      const params = status ? `?status=${status}` : ''
+      const { data } = await api.get(`/api/admin/ai-problems${params}`)
+      setProblems(data.problems || [])
+      setTotal(data.total || 0)
+      if (data.problems?.length > 0) {
+        setSelectedId((prev) => prev || data.problems[0]._id)
       }
-      setError('')
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load review queue.')
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to load problems')
     } finally {
       setLoading(false)
     }
-  }, [selectedId])
+  }, [])
 
-  useEffect(() => { fetchQueue(1) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchList(statusFilter)
+  }, [statusFilter, fetchList])
 
-  const handleReviewed = (reviewedId) => {
-    // Remove from queue locally, select next
-    const idx = queue.findIndex((p) => p._id === reviewedId)
-    const next = queue[idx + 1] || queue[idx - 1] || null
-    setQueue((q) => q.filter((p) => p._id !== reviewedId))
-    setTotal((t) => t - 1)
-    setSelectedId(next?._id || null)
+  const handleApprove = (id) => {
+    setProblems((prev) =>
+      prev.map((p) => (p._id === id ? { ...p, status: 'published' } : p))
+    )
   }
 
+  const handleReject = (id) => {
+    setProblems((prev) =>
+      prev.map((p) => (p._id === id ? { ...p, status: 'rejected' } : p))
+    )
+  }
+
+  const filterButtons = [
+    { value: 'pending_review', label: '⏳ Pending' },
+    { value: 'published', label: '✅ Published' },
+    { value: 'rejected', label: '❌ Rejected' },
+    { value: '', label: '🔍 All' },
+  ]
+
   return (
-    <div className="flex h-full overflow-hidden">
-
-      {/* ── Left: queue list ──────────────────────────────────────────────── */}
-      <div className="w-80 shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-
-        {/* Queue header */}
-        <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center justify-between mb-1">
-            <h1 className="text-sm font-bold text-gray-900 dark:text-white">Review Queue</h1>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/40">
-              {total} pending
-            </span>
+    <div className="flex flex-col h-[calc(100vh-80px)] min-h-0">
+      {/* Page header */}
+      <div className="shrink-0 px-6 pt-6 pb-4 border-b border-white/8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-white">Problem Review Queue</h1>
+            <p className="text-sm text-white/50 mt-0.5">
+              Review AI-generated problems before publishing to the platform
+            </p>
           </div>
-          <p className="text-xs text-gray-400">Oldest first (FIFO)</p>
-        </div>
-
-        {/* List */}
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="p-4 space-y-2">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="h-16 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-              ))}
-            </div>
-          ) : error ? (
-            <p className="p-4 text-sm text-red-500">{error}</p>
-          ) : queue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-center p-4">
-              <span className="text-3xl mb-2">🎉</span>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Queue is empty!</p>
-              <p className="text-xs text-gray-400 mt-1">All problems have been reviewed.</p>
-            </div>
-          ) : (
-            <>
-              {queue.map((p) => (
-                <QueueItem
-                  key={p._id}
-                  problem={p}
-                  isSelected={p._id === selectedId}
-                  onClick={() => setSelectedId(p._id)}
-                />
-              ))}
-              {totalPages > 1 && (
-                <div className="flex gap-2 p-3 border-t border-gray-100 dark:border-gray-800">
-                  <button
-                    onClick={() => fetchQueue(page - 1)}
-                    disabled={page <= 1}
-                    className="flex-1 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    ← Prev
-                  </button>
-                  <button
-                    onClick={() => fetchQueue(page + 1)}
-                    disabled={page >= totalPages}
-                    className="flex-1 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Next →
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+          <div className="flex gap-2">
+            {filterButtons.map((fb) => (
+              <button
+                key={fb.value}
+                onClick={() => {
+                  setStatusFilter(fb.value)
+                  setSelectedId(null)
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                  statusFilter === fb.value
+                    ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
+                    : 'border-white/10 text-white/50 hover:text-white/80 hover:bg-white/5'
+                }`}
+              >
+                {fb.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Right: detail panel ───────────────────────────────────────────── */}
-      {selectedId ? (
-        <ProblemDetail
-          key={selectedId}
-          problemId={selectedId}
-          onReviewed={handleReviewed}
-        />
-      ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-          <div className="text-center p-8">
-            <span className="text-5xl">🗄️</span>
-            <p className="mt-4 text-lg font-bold text-gray-800 dark:text-white">Select a problem to review</p>
-            <p className="mt-1 text-sm text-gray-400">
-              Choose from the queue on the left to view full details and take action.
-            </p>
-          </div>
+      {error && (
+        <div className="mx-6 mt-3 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
+          {error}
         </div>
       )}
+
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Left: problem list */}
+        <div className="w-72 shrink-0 border-r border-white/8 flex flex-col min-h-0">
+          <div className="px-3 py-2 border-b border-white/5 flex items-center justify-between">
+            <span className="text-xs text-white/40">
+              {loading ? 'Loading…' : `${total} problem${total !== 1 ? 's' : ''}`}
+            </span>
+            <button
+              onClick={() => fetchList(statusFilter)}
+              className="text-xs text-white/40 hover:text-violet-400 transition-colors cursor-pointer"
+            >
+              ↻ Refresh
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+            {loading ? (
+              <div className="text-center text-white/30 text-sm pt-8">Loading…</div>
+            ) : problems.length === 0 ? (
+              <div className="text-center text-white/30 text-sm pt-8">
+                No problems in this queue
+              </div>
+            ) : (
+              problems.map((p) => (
+                <ProblemRow
+                  key={p._id}
+                  problem={p}
+                  selected={selectedId === p._id}
+                  onClick={() => setSelectedId(p._id)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right: detail panel */}
+        <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
+          {selectedId ? (
+            <ProblemDetail
+              key={selectedId}
+              problemId={selectedId}
+              onApprove={handleApprove}
+              onReject={handleReject}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-white/30 gap-2">
+              <span className="text-4xl">🔍</span>
+              <p className="text-sm">Select a problem to review</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,0 +1,19 @@
+# ── Judge Service ──────────────────────────────────────────────────────────────
+# Installs into the venv created by setup.sh (or manually).
+# Pin versions for reproducibility in a production-like project.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# Async task queue
+celery==5.4.0
+redis==5.2.0
+
+# Settings management
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# Utilities
+python-dotenv==1.0.1

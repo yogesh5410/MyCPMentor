@@ -1,0 +1,98 @@
+services:
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── FastAPI Judge API ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: judge-service:latest
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Mount Docker socket so the API can also run judge-sync directly
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/judge/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  worker:
+    image: judge-service:latest      # reuse the image built above
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: >
+      celery -A app.worker.celery_app worker
+        --loglevel=info
+        --concurrency=4
+        --queues=celery
+        --hostname=worker@%h
+    env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    # CRITICAL: Docker socket lets the worker spawn sandbox containers
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # ── Celery Flower (queue monitor UI) ────────────────────────────────────────
+  flower:
+    image: judge-service:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: >
+      celery -A app.worker.celery_app flower
+        --port=5555
+        --broker=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - worker
+
+  # ── Sandbox image build helper ───────────────────────────────────────────────
+  # Run with: docker compose --profile build-sandbox build sandbox-image
+  sandbox-image:
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile
+    image: judge-sandbox:latest
+    profiles:
+      - build-sandbox
+    command: echo "Sandbox image built."
+
+volumes:
+  redis_data:

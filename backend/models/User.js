@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0, // balance can never go below 0
     },
+
+    // ── Battle stats ──────────────────────────────────────────────────────────
+    battleWins:   { type: Number, default: 0 },
+    battleLosses: { type: Number, default: 0 },
+    battleDraws:  { type: Number, default: 0 },
+    battleStreak: { type: Number, default: 0 }, // current win streak
   },
   { timestamps: true }
 )

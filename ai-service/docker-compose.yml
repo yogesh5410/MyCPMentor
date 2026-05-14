@@ -1,0 +1,48 @@
+services:
+  # ── Redis (DB 1 avoids clash with judge-service which uses DB 0) ────────────
+  ai-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6381:6379"      # exposed on 6381 locally; service-to-service on 6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI server ──────────────────────────────────────────────────────────
+  ai-api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    env_file: .env
+    environment:
+      # Override REDIS_URL to point at the container-internal Redis
+      REDIS_URL: redis://ai-redis:6379/1
+    depends_on:
+      ai-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/ai/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Celery worker ────────────────────────────────────────────────────────────
+  ai-worker:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      REDIS_URL: redis://ai-redis:6379/1
+    depends_on:
+      ai-redis:
+        condition: service_healthy
+    # concurrency=2 is enough (each job does 4 Groq calls sequentially)
+    command: >
+      celery -A app.worker.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      --queues=celery
